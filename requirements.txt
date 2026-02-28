@@ -1,0 +1,25 @@
+# MD2PDF Pro - Python Dependencies
+
+# Core
+typer>=0.9.0
+rich>=13.0.0
+pydantic>=2.0.0
+pyyaml>=6.0
+
+# Async
+aiofiles>=23.0.0
+aiohttp>=3.8.0
+
+# File monitoring
+watchdog>=3.0.0
+
+# Optional - for adaptive concurrency
+psutil>=5.9.0
+
+# Development
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.0.0
+ruff>=0.1.0
+mypy>=1.0.0
+black>=23.0.0
