@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "md2pdf-pro"
-version = "1.0.1"
+version = "1.1.0"
 description = "Batch Markdown to PDF converter using Pandoc + Tectonic + Mermaid-CLI"
 readme = "README.md"
 license = {text = "MIT"}

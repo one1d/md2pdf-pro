@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] - 2026-02-28
+
+### Added
+- Add emoji and icon support in Markdown (+emoji extension)
+
+### Fixed
+- Handle directory output (use input filename inside directory)
+- Ensure output always has .pdf extension
+- Change default font to Times New Roman (cross-platform)
+- Update author to Guoqin Chen
+- Fix hardcoded version in code
+
+## [1.0.1] - 2026-02-28
+
+All notable changes to this project will be documented in this file.
+
 ## [1.0.1] - 2026-02-28
 
 ### Fixed

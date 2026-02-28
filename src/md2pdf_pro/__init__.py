@@ -1,6 +1,6 @@
 """MD2PDF Pro - Batch Markdown to PDF Converter."""
 
-__version__ = "1.0.1"
+__version__ = "1.1.0"
 __author__ = "Guoqin Chen"
 
 from md2pdf_pro.config import ProjectConfig
