@@ -172,6 +172,8 @@ md2pdf doctor
 
 ## 配置文件
 
+详细配置说明请参考 [配置文档](docs/CONFIG.md)。
+
 创建 `md2pdf.yaml` 配置文件：
 
 ```yaml
