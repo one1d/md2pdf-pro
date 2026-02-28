@@ -106,7 +106,7 @@ class FontConfig(BaseModel):
             "Microsoft YaHei",
         ]
     )
-    latin_primary: str = Field(default="Latin Modern Roman")
+    latin_primary: str = Field(default="Times New Roman")
     monospace: str = Field(default="Menlo")
     geometry_margin: str = Field(default="2.5cm")
 
