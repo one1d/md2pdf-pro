@@ -226,6 +226,7 @@ class PandocEngine:
             "--standalone" if self.config.standalone else "",
             f"--pdf-engine={self.config.pdf_engine.value}",
             f"--highlight-style={self.config.highlight_style}",
+            f"-fmarkdown{self.config.extensions}",
         ]
 
         # Add template if specified

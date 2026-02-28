@@ -80,6 +80,7 @@ class PandocConfig(BaseModel):
     toc: bool = False
     toc_depth: int = Field(default=3)
     timeout: int = Field(default=300)  # seconds
+    extensions: str = Field(default="+emoji")  # Enable emoji support
 
 
 class ProcessingConfig(BaseModel):
