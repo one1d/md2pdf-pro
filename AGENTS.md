@@ -13,26 +13,21 @@
 
 ```
 ./
-├── src/md2pdf_pro/          # Source code (IMPLEMENTED)
+├── src/md2pdf_pro/          # Source code
 │   ├── __init__.py          # Package init
-│   ├── config.py            # Pydantic config (COMPLETE)
-│   ├── preprocessor.py      # Mermaid processing (COMPLETE)
-│   ├── converter.py         # Pandoc engine (COMPLETE)
-│   ├── parallel.py           # Batch processor (COMPLETE)
-│   ├── watcher.py           # File watcher (COMPLETE)
-│   └── cli.py               # CLI entry (COMPLETE)
+│   ├── config.py            # Pydantic config
+│   ├── preprocessor.py      # Mermaid processing
+│   ├── converter.py         # Pandoc engine
+│   ├── parallel.py          # Batch processor
+│   ├── watcher.py           # File watcher
+│   └── cli.py              # CLI entry
 ├── tests/                   # Test suite
 │   ├── conftest.py
 │   ├── unit/
 │   └── integration/
-├── docs/                    # Technical docs
-│   ├── TECHNICAL_DESIGN.md
-│   ├── IMPLEMENTATION_PLAN.md
-│   ├── QUALITY_STANDARDS.md
-│   └── RISK_ASSESSMENT.md
-├── pyproject.toml          # Project config
-├── requirements.txt        # Dependencies
-├── Makefile               # Build scripts
+├── pyproject.toml           # Project config
+├── requirements.txt         # Dependencies
+├── Makefile                # Build scripts
 └── .gitignore
 ```
 

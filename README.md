@@ -74,18 +74,7 @@ md2pdf-pro/
 
 ---
 
-## 文档
-
-| 文档 | 说明 |
-|------|------|
-| [SPEC规范](./md2pdf_PROJECT_SPEC..md) | 项目规范 |
-| [技术设计](./docs/TECHNICAL_DESIGN.md) | 架构设计 |
-| [实施计划](./docs/IMPLEMENTATION_PLAN.md) | 72小时任务分解 |
-| [质量标准](./docs/QUALITY_STANDARDS.md) | 代码/测试规范 |
-| [风险评估](./docs/RISK_ASSESSMENT.md) | 风险缓解 |
-
----
-
+## 开发
 ## 开发
 
 ```bash
