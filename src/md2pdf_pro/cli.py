@@ -77,6 +77,19 @@ def convert(
     # Set output path
     if output is None:
         output = input_file.with_suffix(".pdf")
+    elif output.is_dir():
+        # If output is a directory, use input filename inside it
+        output = output / f"{input_file.stem}.pdf"
+    elif output.suffix.lower() != ".pdf":
+        # Ensure output has .pdf extension
+        output = output.with_suffix(".pdf")
+    if output is None:
+        output = input_file.with_suffix(".pdf")
+    elif output.is_dir():
+        # If output is a directory, use input filename inside it
+        output = output / f"{input_file.stem}.pdf"
+    if output is None:
+        output = input_file.with_suffix(".pdf")
 
     console.print(f"[cyan]Converting:[/cyan] {input_file.name}")
 
