@@ -1,0 +1,38 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "match": "Edit|Write",
+        "not_match": "\\.git/.*|dist/.*|build/.*|\\.mcp\\.json",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ruff check ${editTargetFile}",
+            "description": "Auto-lint with ruff"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "match": "Edit|Write",
+        "match_path": "\\.env|secrets|credentials|API_KEY",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'Editing sensitive files is not allowed' && exit 1",
+            "description": "Block edits to sensitive files"
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(ruff check:*)",
+      "Bash(mypy:*)",
+      "Bash(pytest:*)",
+      "Bash(black:*)"
+    ]
+  }
+}
