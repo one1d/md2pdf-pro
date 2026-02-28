@@ -48,3 +48,13 @@ Thumbs.db
 output/
 *.pdf
 .md2pdf.yaml
+
+
+# Planning documents (internal)
+md2pdf_PROJECT_SPEC*.md
+MD2PDF_Pro_完整开发方案.md
+md2pdf_pro_spec_analysis_report.md
+docs/TECHNICAL_DESIGN.md
+docs/IMPLEMENTATION_PLAN.md
+docs/QUALITY_STANDARDS.md
+docs/RISK_ASSESSMENT.md
