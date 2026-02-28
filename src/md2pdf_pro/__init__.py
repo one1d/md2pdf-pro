@@ -1,7 +1,7 @@
 """MD2PDF Pro - Batch Markdown to PDF Converter."""
 
 __version__ = "1.0.1"
-__author__ = "MD2PDF Team"
+__author__ = "Guoqin Chen"
 
 from md2pdf_pro.config import ProjectConfig
 from md2pdf_pro.converter import PandocEngine

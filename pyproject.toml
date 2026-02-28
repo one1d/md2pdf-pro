@@ -9,7 +9,7 @@ description = "Batch Markdown to PDF converter using Pandoc + Tectonic + Mermaid
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
-    {name = "MD2PDF Team"}
+    {name = "Guoqin Chen"}
 ]
 requires-python = ">=3.11"
 keywords = ["markdown", "pdf", "pandoc", "converter", "mermaid"]
