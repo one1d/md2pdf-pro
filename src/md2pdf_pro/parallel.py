@@ -9,12 +9,20 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, TypeVar
+from typing import TypeVar
 
 from rich.console import Console
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn, TimeRemainingColumn
+from rich.progress import (
+    BarColumn,
+    Progress,
+    SpinnerColumn,
+    TaskProgressColumn,
+    TextColumn,
+    TimeRemainingColumn,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -28,8 +36,8 @@ class ProcessingResult:
 
     success: bool
     input_path: Path
-    output_path: Optional[Path] = None
-    error: Optional[str] = None
+    output_path: Path | None = None
+    error: str | None = None
     duration_ms: float = 0.0
 
 
@@ -41,7 +49,7 @@ class BatchResult:
     success: int
     failed: int
     skipped: int
-    results: List[ProcessingResult] = field(default_factory=list)
+    results: list[ProcessingResult] = field(default_factory=list)
     total_duration_ms: float = 0.0
 
     @property
@@ -52,7 +60,7 @@ class BatchResult:
         return self.success / self.total
 
     @property
-    def failed_items(self) -> List[Path]:
+    def failed_items(self) -> list[Path]:
         """Get list of failed item paths."""
         return [r.input_path for r in self.results if not r.success]
 
@@ -72,7 +80,7 @@ class BatchProcessor:
         self,
         max_workers: int = 8,
         show_progress: bool = True,
-        console: Optional[Console] = None,
+        console: Console | None = None,
     ):
         """Initialize batch processor.
 
@@ -84,13 +92,13 @@ class BatchProcessor:
         self.max_workers = max_workers
         self.show_progress = show_progress
         self.console = console or Console()
-        self.semaphore: Optional[asyncio.Semaphore] = None
-        self.progress: Optional[Progress] = None
-        self._task_id: Optional[int] = None
+        self.semaphore: asyncio.Semaphore | None = None
+        self.progress: Progress | None = None
+        self._task_id: int | None = None
 
     async def process_batch(
         self,
-        items: List[Path],
+        items: list[Path],
         process_fn: Callable[[Path], asyncio.coroutine],
         *,
         task_name: str = "Processing",
@@ -113,7 +121,7 @@ class BatchProcessor:
             return BatchResult(total=0, success=0, failed=0, skipped=0)
 
         start_time = time.time()
-        results: List[ProcessingResult] = []
+        results: list[ProcessingResult] = []
         semaphore = asyncio.Semaphore(self.max_workers)
 
         # Create progress bar
@@ -143,7 +151,7 @@ class BatchProcessor:
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         # Convert exceptions to failed results
-        final_results: List[ProcessingResult] = []
+        final_results: list[ProcessingResult] = []
         for i, result in enumerate(results):
             if isinstance(result, Exception):
                 final_results.append(
@@ -203,7 +211,7 @@ class BatchProcessor:
         Returns:
             ProcessingResult
         """
-        last_error: Optional[str] = None
+        last_error: str | None = None
 
         for attempt in range(max_attempts + 1):
             start_time = time.time()
@@ -264,7 +272,7 @@ class AdaptiveBatchProcessor(BatchProcessor):
         cpu_threshold: float = 80.0,
         memory_threshold: float = 85.0,
         show_progress: bool = True,
-        console: Optional[Console] = None,
+        console: Console | None = None,
     ):
         """Initialize adaptive batch processor.
 
@@ -308,7 +316,7 @@ class AdaptiveBatchProcessor(BatchProcessor):
 
 
 async def process_files_parallel(
-    files: List[Path],
+    files: list[Path],
     process_fn: Callable[[Path], asyncio.coroutine],
     max_workers: int = 8,
     show_progress: bool = True,

@@ -7,9 +7,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import sys
 from pathlib import Path
-from typing import List, Optional
 
 import typer
 from rich.console import Console
@@ -17,17 +15,12 @@ from rich.table import Table
 
 from md2pdf_pro import __version__
 from md2pdf_pro.config import (
-    FontConfig,
-    MermaidConfig,
-    PandocConfig,
-    ProcessingConfig,
     ProjectConfig,
     get_default_config_path,
-    init_config,
 )
 from md2pdf_pro.converter import PandocEngine, check_dependencies
-from md2pdf_pro.preprocessor import MermaidPreprocessor
 from md2pdf_pro.parallel import BatchProcessor
+from md2pdf_pro.preprocessor import MermaidPreprocessor
 
 # Initialize console
 console = Console()
@@ -67,9 +60,9 @@ def main(
 @app.command()
 def convert(
     input_file: Path = typer.Argument(..., exists=True, file_okay=True, dir_okay=False, help="Input Markdown file"),
-    output: Optional[Path] = typer.Option(None, "--output", "-o", help="Output PDF file (default: same name as input)"),
-    config: Optional[Path] = typer.Option(None, "--config", "-c", help="Configuration file"),
-    template: Optional[Path] = typer.Option(None, "--template", "-t", help="Pandoc template"),
+    output: Path | None = typer.Option(None, "--output", "-o", help="Output PDF file (default: same name as input)"),
+    config: Path | None = typer.Option(None, "--config", "-c", help="Configuration file"),
+    template: Path | None = typer.Option(None, "--template", "-t", help="Pandoc template"),
     workers: int = typer.Option(8, "--workers", "-w", help="Number of concurrent workers"),
 ):
     """Convert a Markdown file to PDF."""
@@ -100,9 +93,9 @@ def convert(
 def batch(
     input_pattern: str = typer.Argument(..., help="File pattern (e.g., '*.md', 'docs/*.md')"),
     output_dir: Path = typer.Option(Path("./output"), "--output", "-o", help="Output directory"),
-    config: Optional[Path] = typer.Option(None, "--config", "-c", help="Configuration file"),
+    config: Path | None = typer.Option(None, "--config", "-c", help="Configuration file"),
     recursive: bool = typer.Option(False, "--recursive", "-r", help="Process subdirectories"),
-    ignore: Optional[List[str]] = typer.Option(None, "--ignore", "-i", help="Patterns to ignore"),
+    ignore: list[str] | None = typer.Option(None, "--ignore", "-i", help="Patterns to ignore"),
     workers: int = typer.Option(8, "--workers", "-w", help="Number of concurrent workers"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be processed"),
 ):
@@ -189,7 +182,7 @@ def init(
 
 @app.command()
 def config_show(
-    config: Optional[Path] = typer.Option(None, "--config", "-c", help="Configuration file"),
+    config: Path | None = typer.Option(None, "--config", "-c", help="Configuration file"),
 ):
     """Show current configuration."""
     project_config = _load_config(config)
@@ -249,7 +242,7 @@ def doctor(
         console.print("\n[yellow]Auto-fix not implemented. Please install dependencies manually.[/yellow]")
 
 
-def _load_config(config_path: Optional[Path]) -> ProjectConfig:
+def _load_config(config_path: Path | None) -> ProjectConfig:
     """Load project configuration."""
     if config_path and config_path.exists():
         return ProjectConfig.from_yaml(config_path)
@@ -263,7 +256,7 @@ def _load_config(config_path: Optional[Path]) -> ProjectConfig:
     return ProjectConfig()
 
 
-def _find_files(pattern: str, recursive: bool, ignore: Optional[List[str]]) -> List[Path]:
+def _find_files(pattern: str, recursive: bool, ignore: list[str] | None) -> list[Path]:
     """Find files matching pattern."""
     base_path = Path(".")
     search_pattern = pattern
@@ -287,7 +280,7 @@ def _find_files(pattern: str, recursive: bool, ignore: Optional[List[str]]) -> L
     return sorted(files)
 
 
-def _should_process(file: Path, ignore: Optional[List[str]]) -> bool:
+def _should_process(file: Path, ignore: list[str] | None) -> bool:
     """Check if file should be processed."""
     ignore_patterns = ignore or [".*", "_*"]
 
@@ -329,7 +322,7 @@ async def _convert_single(input_file: Path, output_file: Path, config: ProjectCo
         temp_md.unlink(missing_ok=True)
 
 
-async def _convert_batch(files: List[Path], config: ProjectConfig):
+async def _convert_batch(files: list[Path], config: ProjectConfig):
     """Convert batch of files."""
     # Initialize components
     mermaid = MermaidPreprocessor(config.mermaid)
@@ -371,7 +364,7 @@ async def _watch_and_convert(
 
 def _print_batch_results(results) -> None:
     """Print batch conversion results."""
-    console.print(f"\n[bold]Batch Complete[/bold]")
+    console.print("\n[bold]Batch Complete[/bold]")
     console.print(f"  Success: [green]{results.success}[/green]")
     console.print(f"  Failed:  [red]{results.failed}[/red]")
     console.print(f"  Total:   {results.total}")

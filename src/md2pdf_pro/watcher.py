@@ -8,9 +8,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Set
 
 from watchdog.observers import Observer
 
@@ -32,7 +32,7 @@ class MarkdownEventHandler:
     def __init__(
         self,
         callback: Callable[[FileChange], None],
-        ignore_patterns: Optional[List[str]] = None,
+        ignore_patterns: list[str] | None = None,
     ):
         """Initialize event handler.
 
@@ -117,11 +117,11 @@ class FileWatcher:
     def __init__(
         self,
         watch_path: Path,
-        callback: Callable[[List[Path]], None],
+        callback: Callable[[list[Path]], None],
         *,
         recursive: bool = True,
         debounce_ms: int = 500,
-        ignore_patterns: Optional[List[str]] = None,
+        ignore_patterns: list[str] | None = None,
     ):
         """Initialize file watcher.
 
@@ -138,9 +138,9 @@ class FileWatcher:
         self.debounce_ms = debounce_ms
         self.ignore_patterns = ignore_patterns or [".*", "_*", "node_modules", "__pycache__"]
 
-        self._observer: Optional[Observer] = None
-        self._pending_changes: Dict[Path, asyncio.Task] = {}
-        self._loop: Optional[asyncio.AbstractEventLoop] = None
+        self._observer: Observer | None = None
+        self._pending_changes: dict[Path, asyncio.Task] = {}
+        self._loop: asyncio.AbstractEventLoop | None = None
 
     def start(self) -> None:
         """Start watching for file changes."""
@@ -206,12 +206,12 @@ class WatchManager:
 
     def __init__(self):
         """Initialize watch manager."""
-        self._watchers: Dict[Path, FileWatcher] = {}
+        self._watchers: dict[Path, FileWatcher] = {}
 
     def add_watch(
         self,
         path: Path,
-        callback: Callable[[List[Path]], None],
+        callback: Callable[[list[Path]], None],
         *,
         recursive: bool = True,
         debounce_ms: int = 500,
@@ -258,13 +258,13 @@ class WatchManager:
         self._watchers.clear()
 
     @property
-    def watchers(self) -> Dict[Path, FileWatcher]:
+    def watchers(self) -> dict[Path, FileWatcher]:
         """Get all active watchers."""
         return self._watchers.copy()
 
 
 # Global watch manager instance
-_watch_manager: Optional[WatchManager] = None
+_watch_manager: WatchManager | None = None
 
 
 def get_watch_manager() -> WatchManager:
@@ -290,7 +290,7 @@ async def watch_and_convert(
         recursive: Watch subdirectories
         debounce_ms: Debounce delay
     """
-    pending: Set[Path] = set()
+    pending: set[Path] = set()
 
     async def process_pending():
         while pending:
@@ -304,7 +304,7 @@ async def watch_and_convert(
                 except Exception as e:
                     logger.error(f"Failed to convert {file}: {e}")
 
-    def on_change(changes: List[Path]) -> None:
+    def on_change(changes: list[Path]) -> None:
         for change in changes:
             pending.add(change)
 

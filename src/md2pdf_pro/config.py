@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any
 
 import yaml
 from pydantic import BaseModel, Field
@@ -72,10 +72,10 @@ class PandocConfig(BaseModel):
     """Pandoc conversion configuration."""
 
     pdf_engine: PdfEngine = Field(default=PdfEngine.TECTONIC)
-    template: Optional[Path] = None
+    template: Path | None = None
     highlight_style: str = Field(default="tango")
     math_engine: MathEngine = Field(default=MathEngine.MATHSPEC)
-    extra_vars: Dict[str, Any] = Field(default_factory=dict)
+    extra_vars: dict[str, Any] = Field(default_factory=dict)
     standalone: bool = True
     toc: bool = False
     toc_depth: int = Field(default=3)
@@ -97,7 +97,7 @@ class FontConfig(BaseModel):
     """Font configuration for PDF output."""
 
     cjk_primary: str = Field(default="PingFang SC")
-    cjk_fallback: List[str] = Field(
+    cjk_fallback: list[str] = Field(
         default_factory=lambda: [
             "STHeiti",
             "Noto Sans CJK SC",
@@ -128,7 +128,7 @@ class LoggingConfig(BaseModel):
     format: str = Field(
         default="[%(levelname)s] %(message)s"
     )
-    file: Optional[Path] = None
+    file: Path | None = None
     rotation: str = Field(default="daily")  # daily, size, none
     max_bytes: int = Field(default=10485760)  # 10MB
     backup_count: int = Field(default=7)
@@ -148,8 +148,8 @@ class ProjectConfig(BaseModel):
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
 
     # File patterns
-    input_patterns: List[str] = Field(default_factory=lambda: ["*.md", "*.markdown"])
-    ignore_patterns: List[str] = Field(
+    input_patterns: list[str] = Field(default_factory=lambda: ["*.md", "*.markdown"])
+    ignore_patterns: list[str] = Field(
         default_factory=lambda: [
             ".*",
             "_*",
@@ -166,7 +166,7 @@ class ProjectConfig(BaseModel):
         extra = "forbid"
 
     @classmethod
-    def from_yaml(cls, path: Path | str) -> "ProjectConfig":
+    def from_yaml(cls, path: Path | str) -> ProjectConfig:
         """Load configuration from YAML file.
 
         Args:
@@ -200,7 +200,7 @@ class ProjectConfig(BaseModel):
             yaml.safe_dump(data, f, default_flow_style=False, allow_unicode=True)
 
     @classmethod
-    def from_env(cls) -> "ProjectConfig":
+    def from_env(cls) -> ProjectConfig:
         """Load configuration from environment variables.
 
         Environment variables take precedence over defaults.
@@ -225,7 +225,7 @@ class ProjectConfig(BaseModel):
 
         return config
 
-    def merge_with_args(self, args: Dict[str, Any]) -> "ProjectConfig":
+    def merge_with_args(self, args: dict[str, Any]) -> ProjectConfig:
         """Merge configuration with command-line arguments.
 
         Args:
@@ -275,7 +275,7 @@ def get_default_config_path() -> Path:
     return candidates[0]
 
 
-def init_config(path: Optional[Path | str] = None) -> ProjectConfig:
+def init_config(path: Path | str | None = None) -> ProjectConfig:
     """Initialize configuration.
 
     Args:

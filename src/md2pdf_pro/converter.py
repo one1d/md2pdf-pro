@@ -8,13 +8,12 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import os
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from md2pdf_pro.config import FontConfig, PandocConfig, PdfEngine
+from md2pdf_pro.config import FontConfig, PandocConfig
 
 logger = logging.getLogger(__name__)
 
@@ -24,9 +23,9 @@ class ConversionResult:
     """Result of a Pandoc conversion."""
 
     success: bool
-    output_path: Optional[Path] = None
-    error: Optional[str] = None
-    error_code: Optional[int] = None
+    output_path: Path | None = None
+    error: str | None = None
+    error_code: int | None = None
     duration_ms: float = 0.0
 
 
@@ -67,7 +66,7 @@ class PandocEngine:
     def __init__(
         self,
         config: PandocConfig,
-        font_config: Optional[FontConfig] = None,
+        font_config: FontConfig | None = None,
     ):
         """Initialize Pandoc engine.
 
@@ -77,11 +76,11 @@ class PandocEngine:
         """
         self.config = config
         self.font_config = font_config or FontConfig()
-        self._pandoc_available: Optional[bool] = None
-        self._pandoc_version: Optional[str] = None
+        self._pandoc_available: bool | None = None
+        self._pandoc_version: str | None = None
 
     @property
-    def version(self) -> Optional[str]:
+    def version(self) -> str | None:
         """Get Pandoc version."""
         if self._pandoc_version is None:
             try:
@@ -120,8 +119,8 @@ class PandocEngine:
         self,
         input_file: Path,
         output_file: Path,
-        metadata: Optional[Dict[str, Any]] = None,
-        timeout: Optional[int] = None,
+        metadata: dict[str, Any] | None = None,
+        timeout: int | None = None,
     ) -> ConversionResult:
         """Convert Markdown to PDF using Pandoc.
 
@@ -164,7 +163,7 @@ class PandocEngine:
                 stdout, stderr = await asyncio.wait_for(
                     process.communicate(), timeout=timeout
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 process.kill()
                 await process.wait()
                 duration = (asyncio.get_event_loop().time() - start_time) * 1000
@@ -209,8 +208,8 @@ class PandocEngine:
         self,
         input_file: Path,
         output_file: Path,
-        metadata: Optional[Dict[str, Any]] = None,
-    ) -> List[str]:
+        metadata: dict[str, Any] | None = None,
+    ) -> list[str]:
         """Build Pandoc command arguments.
 
         Args:
@@ -221,7 +220,7 @@ class PandocEngine:
         Returns:
             List of command arguments
         """
-        args: List[str] = [
+        args: list[str] = [
             str(input_file),
             "-o", str(output_file),
             "--standalone" if self.config.standalone else "",
@@ -258,13 +257,13 @@ class PandocEngine:
 
         return args
 
-    def _get_font_args(self) -> List[str]:
+    def _get_font_args(self) -> list[str]:
         """Get font-related Pandoc arguments.
 
         Returns:
             List of font argument pairs
         """
-        args: List[str] = []
+        args: list[str] = []
 
         # CJK main font
         args.extend([
@@ -289,7 +288,7 @@ class PandocEngine:
         return args
 
 
-def check_dependencies() -> Dict[str, bool]:
+def check_dependencies() -> dict[str, bool]:
     """Check if required dependencies are available.
 
     Returns:

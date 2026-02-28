@@ -5,8 +5,8 @@ __author__ = "MD2PDF Team"
 
 from md2pdf_pro.config import ProjectConfig
 from md2pdf_pro.converter import PandocEngine
-from md2pdf_pro.preprocessor import MermaidPreprocessor
 from md2pdf_pro.parallel import BatchProcessor
+from md2pdf_pro.preprocessor import MermaidPreprocessor
 
 __all__ = [
     "ProjectConfig",

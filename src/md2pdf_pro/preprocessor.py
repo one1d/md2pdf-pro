@@ -12,7 +12,6 @@ import re
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import List, Optional, Tuple
 
 from md2pdf_pro.config import MermaidConfig, MermaidFormat, MermaidTheme
 
@@ -78,7 +77,7 @@ class MermaidPreprocessor:
         self.config = config
         self._output_dir = config.output_dir
         self._output_dir.mkdir(parents=True, exist_ok=True)
-        self._mmdc_available: Optional[bool] = None
+        self._mmdc_available: bool | None = None
 
     @property
     def output_dir(self) -> Path:
@@ -105,7 +104,7 @@ class MermaidPreprocessor:
 
         return self._mmdc_available
 
-    async def process(self, content: str, file_id: str) -> Tuple[str, List[Path]]:
+    async def process(self, content: str, file_id: str) -> tuple[str, list[Path]]:
         """Process Mermaid code blocks in Markdown content.
 
         Args:
@@ -120,7 +119,7 @@ class MermaidPreprocessor:
         if not matches:
             return content, []
 
-        generated_files: List[Path] = []
+        generated_files: list[Path] = []
         new_content = content
         offset = 0
 
@@ -210,7 +209,7 @@ class MermaidPreprocessor:
 
     def _build_command(
         self, input_path: Path, output_path: Path
-    ) -> List[str]:
+    ) -> list[str]:
         """Build mmdc command arguments.
 
         Args:
