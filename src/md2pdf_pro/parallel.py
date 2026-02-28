@@ -9,7 +9,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TypeVar
@@ -99,7 +99,7 @@ class BatchProcessor:
     async def process_batch(
         self,
         items: list[Path],
-        process_fn: Callable[[Path], asyncio.coroutine],
+        process_fn: Callable[[Path], Awaitable[None]],
         *,
         task_name: str = "Processing",
         retry_attempts: int = 0,
@@ -196,7 +196,7 @@ class BatchProcessor:
     async def _process_with_retry(
         self,
         item: Path,
-        process_fn: Callable[[Path], asyncio.coroutine],
+        process_fn: Callable[[Path], Awaitable[None]],
         max_attempts: int,
         backoff: float,
     ) -> ProcessingResult:
@@ -317,7 +317,7 @@ class AdaptiveBatchProcessor(BatchProcessor):
 
 async def process_files_parallel(
     files: list[Path],
-    process_fn: Callable[[Path], asyncio.coroutine],
+    process_fn: Callable[[Path], Awaitable[None]],
     max_workers: int = 8,
     show_progress: bool = True,
 ) -> BatchResult:

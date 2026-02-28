@@ -79,6 +79,7 @@ class PandocConfig(BaseModel):
     standalone: bool = True
     toc: bool = False
     toc_depth: int = Field(default=3)
+    timeout: int = Field(default=300)  # seconds
 
 
 class ProcessingConfig(BaseModel):

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -57,7 +57,7 @@ class MarkdownEventHandler:
                 return True
         return False
 
-    def on_created(self, event):
+    def on_created(self, event) -> None:
         """Handle file creation."""
         if event.is_directory:
             return
@@ -67,7 +67,7 @@ class MarkdownEventHandler:
         if path.suffix.lower() in (".md", ".markdown"):
             self.callback(FileChange(event_type="created", path=path, is_directory=False))
 
-    def on_modified(self, event):
+    def on_modified(self, event) -> None:
         """Handle file modification."""
         if event.is_directory:
             return
@@ -77,7 +77,7 @@ class MarkdownEventHandler:
         if path.suffix.lower() in (".md", ".markdown"):
             self.callback(FileChange(event_type="modified", path=path, is_directory=False))
 
-    def on_deleted(self, event):
+    def on_deleted(self, event) -> None:
         """Handle file deletion."""
         if event.is_directory:
             return
@@ -87,7 +87,7 @@ class MarkdownEventHandler:
         if path.suffix.lower() in (".md", ".markdown"):
             self.callback(FileChange(event_type="deleted", path=path, is_directory=False))
 
-    def on_moved(self, event):
+    def on_moved(self, event) -> None:
         """Handle file move."""
         if event.is_directory:
             return
@@ -139,7 +139,7 @@ class FileWatcher:
         self.ignore_patterns = ignore_patterns or [".*", "_*", "node_modules", "__pycache__"]
 
         self._observer: Observer | None = None
-        self._pending_changes: dict[Path, asyncio.Task] = {}
+        self._pending_changes: dict[Path, asyncio.Task[None]] = {}
         self._loop: asyncio.AbstractEventLoop | None = None
 
     def start(self) -> None:
@@ -277,7 +277,7 @@ def get_watch_manager() -> WatchManager:
 
 async def watch_and_convert(
     watch_path: Path,
-    convert_fn: Callable[[Path], asyncio.coroutine],
+    convert_fn: Callable[[Path], Awaitable[None]],
     *,
     recursive: bool = True,
     debounce_ms: int = 500,
@@ -292,7 +292,7 @@ async def watch_and_convert(
     """
     pending: set[Path] = set()
 
-    async def process_pending():
+    async def process_pending() -> None:
         while pending:
             files = list(pending)
             pending.clear()
