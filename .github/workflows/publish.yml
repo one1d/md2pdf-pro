@@ -30,6 +30,4 @@ jobs:
           python -m build
       
       - name: Publish to PyPI
-        uses: pypa/gh-pypiublish@release/v1
-        with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
+        uses: pypa/gh-pypublish@release/v1
