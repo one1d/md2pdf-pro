@@ -138,7 +138,7 @@ class LoggingConfig(BaseModel):
 class ProjectConfig(BaseModel):
     """Main project configuration."""
 
-    version: str = Field(default="1.0.0")
+    version: str = Field(default="1.0.1")
 
     # Sub-configurations
     mermaid: MermaidConfig = Field(default_factory=MermaidConfig)
