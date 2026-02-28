@@ -52,6 +52,12 @@ where = ["src"]
 [tool.ruff]
 line-length = 88
 target-version = "py311"
+exclude = [
+    ".git",
+    ".venv",
+    "venv",
+    "docs",
+]
 
 [tool.ruff.lint]
 select = [
