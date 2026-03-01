@@ -52,6 +52,7 @@ class PdfEngine(str, Enum):
 
 class PdfCompression(str, Enum):
     """PDF compression level."""
+
     NONE = "none"
     WEB = "web"
     SCREEN = "screen"
@@ -62,6 +63,7 @@ class PdfCompression(str, Enum):
 
 class WatermarkPosition(str, Enum):
     """Watermark position."""
+
     CENTER = "center"
     HEADER = "header"
     FOOTER = "footer"
@@ -102,6 +104,7 @@ class PandocConfig(BaseModel):
     toc_depth: int = Field(default=3)
     timeout: int = Field(default=300)  # seconds
     extensions: str = Field(default="+emoji")  # Enable emoji support
+    template_vars: dict[str, Any] = Field(default_factory=dict)
 
 
 class ProcessingConfig(BaseModel):
@@ -134,6 +137,7 @@ class FontConfig(BaseModel):
 
 class PdfMetadataConfig(BaseModel):
     """PDF metadata configuration."""
+
     title: str = Field(default="")
     author: str = Field(default="")
     subject: str = Field(default="")
@@ -143,6 +147,7 @@ class PdfMetadataConfig(BaseModel):
 
 class WatermarkConfig(BaseModel):
     """Watermark configuration."""
+
     enabled: bool = Field(default=False)
     text: str = Field(default="CONFIDENTIAL")
     opacity: float = Field(default=0.3, ge=0.0, le=1.0)
@@ -154,10 +159,10 @@ class WatermarkConfig(BaseModel):
 
 class PdfOptimizationConfig(BaseModel):
     """PDF optimization configuration."""
+
     compression: PdfCompression = Field(default=PdfCompression.SCREEN)
     metadata: PdfMetadataConfig = Field(default_factory=PdfMetadataConfig)
     watermark: WatermarkConfig = Field(default_factory=WatermarkConfig)
-
 
 
 class OutputConfig(BaseModel):
@@ -195,7 +200,6 @@ class ProjectConfig(BaseModel):
     output: OutputConfig = Field(default_factory=OutputConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     pdf: PdfOptimizationConfig = Field(default_factory=PdfOptimizationConfig)
-
 
     # File patterns
     input_patterns: list[str] = Field(default_factory=lambda: ["*.md", "*.markdown"])

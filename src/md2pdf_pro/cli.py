@@ -349,6 +349,86 @@ def doctor(
         )
 
 
+# Templates command group
+templates_app = typer.Typer(help="Manage templates")
+app.add_typer(templates_app, name="templates")
+
+
+@templates_app.command("list")
+def list_templates_cmd():
+    """List available templates."""
+    from md2pdf_pro.templates import (
+        USER_TEMPLATE_DIR,
+        list_templates,
+    )
+
+    templates = list_templates()
+
+    if not templates:
+        console.print("[yellow]No templates found[/yellow]")
+        return
+
+    table = Table(title="Available Templates")
+    table.add_column("Name", style="cyan")
+    table.add_column("Type", style="green")
+    table.add_column("Description", style="white")
+
+    for t in templates:
+        template_type = "Built-in" if t.is_builtin else "User"
+        table.add_row(
+            t.name,
+            template_type,
+            t.description,
+        )
+
+    console.print(table)
+    console.print(f"\n[dim]User templates: {USER_TEMPLATE_DIR}[/dim]")
+
+
+@templates_app.command("path")
+def template_path_cmd(name: str):
+    """Show template path."""
+    from md2pdf_pro.templates import get_template
+
+    path = get_template(name)
+    if path:
+        console.print(f"[green]Template '{name}' found at:[/green]\n{path}")
+    else:
+        console.print(f"[red]Template '{name}' not found[/red]")
+        raise typer.Exit(code=1)
+
+
+@templates_app.command("init")
+def init_template_cmd(
+    name: str = typer.Argument(..., help="Template name"),
+    force: bool = typer.Option(False, "--force", "-f", help="Overwrite existing"),
+):
+    """Initialize a user template from built-in template."""
+    from md2pdf_pro.templates import (
+        ensure_user_template_dir,
+        get_template,
+    )
+
+    # Check if template exists
+    source_path = get_template(name)
+    if not source_path:
+        console.print(f"[red]Template '{name}' not found[/red]")
+        raise typer.Exit(code=1)
+
+    # Ensure user template dir exists
+    user_dir = ensure_user_template_dir()
+    dest_path = user_dir / f"{name}.latex"
+
+    if dest_path.exists() and not force:
+        console.print(f"[yellow]Template already exists: {dest_path}[/yellow]")
+        console.print("Use --force to overwrite")
+        raise typer.Exit(code=1)
+
+    # Copy template
+    import shutil
+
+    shutil.copy(source_path, dest_path)
+    console.print(f"[green]Template copied to:[/green] {dest_path}")
 def _load_config(config_path: Path | None) -> ProjectConfig:
     """Load project configuration."""
     if config_path and config_path.exists():

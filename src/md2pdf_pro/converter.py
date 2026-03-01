@@ -255,6 +255,12 @@ class PandocEngine:
         for key, value in self.config.extra_vars.items():
             args.extend(["-V", f"{key}={value}"])
 
+        # Add template variables
+        for key, value in self.config.template_vars.items():
+            args.extend(["-V", f"{key}={value}"])
+        for key, value in self.config.extra_vars.items():
+            args.extend(["-V", f"{key}={value}"])
+
         # Add metadata
         if metadata:
             for key, value in metadata.items():
