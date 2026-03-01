@@ -27,6 +27,10 @@
 - **中文排版** - 完整的中文支持
 - **并行处理** - 高效批量转换
 - **文件监控** - 自动监听文件变化并转换
+- **PDF优化** - 压缩、元数据、水印
+- **模板系统** - 内置+自定义模板
+- **插件系统** - 扩展功能
+- **中文期刊模板** - 学术论文模板
 
 ---
 
@@ -117,10 +121,26 @@ md2pdf watch ./docs -o output/
 md2pdf convert <input.md> [OPTIONS]
 
 选项:
-  -o, --output PATH    输出PDF路径
-  -c, --config PATH   配置文件路径
-  -t, --template PATH Pandoc模板
-  -w, --workers N     并发数 (默认: 8)
+  -o, --output PATH      输出PDF路径
+  -c, --config PATH     配置文件路径
+  -t, --template PATH   Pandoc模板
+  -w, --workers N       并发数 (默认: 8)
+  
+  # PDF优化选项
+  --compression TEXT     压缩级别 (none/web/screen/ebook/print/prepress)
+  --author TEXT         PDF作者
+  --title TEXT          PDF标题
+  --watermark           启用水印
+  --watermark-text TEXT 水印文本
+  
+  # 中文期刊选项
+  --journal-title TEXT  期刊名称
+  --journal-vol TEXT   卷号
+  --journal-issue TEXT 期号
+  --journal-year TEXT  年份
+  --doi TEXT           DOI编号
+  --affiliation TEXT   单位
+  --email TEXT         邮箱
 ```
 
 #### batch - 批量转换
@@ -147,6 +167,32 @@ md2pdf watch <directory> [OPTIONS]
   -r, --recursive    监听子目录 (默认: True)
   -d, --debounce N   防抖延迟ms (默认: 500)
   -w, --workers N    并发数 (默认: 8)
+```
+
+#### templates - 模板管理
+
+```bash
+# 列出可用模板
+md2pdf templates list
+
+# 查看模板路径
+md2pdf templates path <name>
+
+# 初始化用户模板
+md2pdf templates init <name>
+```
+
+#### plugins - 插件管理
+
+```bash
+# 列出可用插件
+md2pdf plugins list
+
+# 启用插件
+md2pdf plugins enable <name>
+
+# 禁用插件
+md2pdf plugins disable <name>
 ```
 
 #### config - 配置管理
@@ -198,6 +244,15 @@ output:
   temp_dir: /tmp/md2pdf
   optimize_pdf: true
 
+pdf:
+  compression: screen
+  metadata:
+    author: ""
+    title: ""
+  watermark:
+    enabled: false
+    text: "CONFIDENTIAL"
+
 font:
   cjk_primary: "PingFang SC"
 ```
@@ -208,31 +263,44 @@ font:
 
 ### 带Mermaid图表的Markdown
 
-\`\`\`markdown
+```markdown
 # 我的文档
 
 ## 流程图
 
-\`\`\`mermaid
+```mermaid
 flowchart TD
     A[开始] --> B{判断}
     B -->|是| C[处理1]
     B -->|否| D[处理2]
-\`\`\`
+```
 ```
 
 ### 带数学公式
 
-\`\`\`markdown
+```markdown
 ## 数学公式
 
 行内公式: $E = mc^2$
 
 块公式:
 $$
-\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}
+\int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}
 $$
-\`\`\`
+```
+
+### 中文期刊论文
+
+```bash
+md2pdf convert paper.md -o output.pdf \
+  --journal-title "计算机学报" \
+  --journal-vol 45 \
+  --journal-issue 3 \
+  --journal-year 2024 \
+  --doi 10.12345/jos.2024.001 \
+  --affiliation "清华大学" \
+  --author "张三, 李四" \
+  --email "zhangsan@tsinghua.edu.cn"
 ```
 
 ---
@@ -242,20 +310,22 @@ $$
 ```
 md2pdf-pro/
 ├── src/md2pdf_pro/
-│   ├── __init__.py      # 包初始化
-│   ├── config.py         # 配置管理 (Pydantic)
-│   ├── preprocessor.py   # Mermaid预处理
-│   ├── converter.py      # Pandoc转换引擎
-│   ├── parallel.py       # 并行处理
-│   ├── watcher.py        # 文件监控
-│   └── cli.py            # CLI入口
+│   ├── __init__.py        # 包初始化
+│   ├── config.py          # 配置管理 (Pydantic)
+│   ├── preprocessor.py    # Mermaid预处理
+│   ├── converter.py       # Pandoc转换引擎
+│   ├── parallel.py        # 并行处理
+│   ├── watcher.py         # 文件监控
+│   ├── templates.py       # 模板管理
+│   ├── plugins.py         # 插件系统
+│   └── cli.py             # CLI入口
 ├── tests/
 │   ├── conftest.py       # pytest配置
 │   ├── unit/             # 单元测试
 │   └── integration/      # 集成测试
 ├── pyproject.toml        # 项目配置
 ├── requirements.txt      # Python依赖
-├── Makefile              # 构建脚本
+├── Makefile             # 构建脚本
 └── .gitignore
 ```
 
