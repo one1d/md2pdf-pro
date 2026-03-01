@@ -187,6 +187,19 @@ class LoggingConfig(BaseModel):
     backup_count: int = Field(default=7)
 
 
+class PluginConfig(BaseModel):
+    """Plugin configuration."""
+
+    enabled: list[str] = Field(default_factory=list)
+    disabled: list[str] = Field(default_factory=list)
+    config: dict[str, dict[str, Any]] = Field(default_factory=dict)
+
+
+#RV|class ProjectConfig(BaseModel):
+
+
+
+
 class ProjectConfig(BaseModel):
     """Main project configuration."""
 
@@ -200,6 +213,11 @@ class ProjectConfig(BaseModel):
     output: OutputConfig = Field(default_factory=OutputConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     pdf: PdfOptimizationConfig = Field(default_factory=PdfOptimizationConfig)
+    plugins: PluginConfig = Field(default_factory=PluginConfig)
+
+    # File patterns
+
+
 
     # File patterns
     input_patterns: list[str] = Field(default_factory=lambda: ["*.md", "*.markdown"])

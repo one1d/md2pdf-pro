@@ -428,7 +428,90 @@ def init_template_cmd(
     import shutil
 
     shutil.copy(source_path, dest_path)
+    shutil.copy(source_path, dest_path)
     console.print(f"[green]Template copied to:[/green] {dest_path}")
+
+
+# Plugins command group
+plugins_app = typer.Typer(help="Manage plugins")
+app.add_typer(plugins_app, name="plugins")
+
+
+@plugins_app.command("list")
+def list_plugins_cmd():
+    """List available plugins."""
+    from md2pdf_pro.plugins import (
+        get_plugin_manager,
+        register_builtin_plugins,
+    )
+
+    # Register and load plugins
+    register_builtin_plugins()
+    manager = get_plugin_manager()
+
+    plugins = manager.list_plugins()
+
+    if not plugins:
+        console.print("[yellow]No plugins found[/yellow]")
+        return
+
+    table = Table(title="Available Plugins")
+    table.add_column("Name", style="cyan")
+    table.add_column("Version", style="green")
+    table.add_column("Description", style="white")
+    table.add_column("Status", style="yellow")
+
+    for plugin in plugins:
+        status = "[green]Enabled[/green]" if manager.is_enabled(plugin.name) else "[dim]Disabled[/dim]"
+        table.add_row(
+            plugin.name,
+            plugin.version,
+            plugin.description,
+            status,
+        )
+
+    console.print(table)
+
+
+@plugins_app.command("enable")
+def enable_plugin_cmd(name: str):
+    """Enable a plugin."""
+    from md2pdf_pro.plugins import (
+        get_plugin_manager,
+        register_builtin_plugins,
+    )
+
+    register_builtin_plugins()
+    manager = get_plugin_manager()
+
+    if name not in manager._plugins:
+        console.print(f"[red]Plugin '{name}' not found[/red]")
+        raise typer.Exit(code=1)
+
+    manager.enable(name)
+    console.print(f"[green]Plugin '{name}' enabled[/green]")
+
+
+@plugins_app.command("disable")
+def disable_plugin_cmd(name: str):
+    """Disable a plugin."""
+    from md2pdf_pro.plugins import (
+        get_plugin_manager,
+        register_builtin_plugins,
+    )
+
+    register_builtin_plugins()
+    manager = get_plugin_manager()
+
+    if name not in manager._plugins:
+        console.print(f"[red]Plugin '{name}' not found[/red]")
+        raise typer.Exit(code=1)
+
+    manager.disable(name)
+    console.print(f"[yellow]Plugin '{name}' disabled[/yellow]")
+
+
+#WQ|def _load_config(config_path: Path | None) -> ProjectConfig:
 def _load_config(config_path: Path | None) -> ProjectConfig:
     """Load project configuration."""
     if config_path and config_path.exists():
