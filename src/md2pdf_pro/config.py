@@ -15,6 +15,8 @@ from typing import Any
 import yaml
 from pydantic import BaseModel, Field
 
+from md2pdf_pro.errors import ConfigError, ErrorCode
+
 
 class MermaidTheme(str, Enum):
     """Mermaid diagram themes."""
@@ -65,7 +67,9 @@ class MermaidConfig(BaseModel):
     width: int = Field(default=1200)
     background: str = Field(default="white")
     cache_ttl: int = Field(default=86400)  # 24 hours
-    output_dir: Path = Field(default_factory=lambda: Path.home() / ".cache" / "md2pdf" / "mermaid")
+    output_dir: Path = Field(
+        default_factory=lambda: Path.home() / ".cache" / "md2pdf" / "mermaid"
+    )
 
 
 class PandocConfig(BaseModel):
@@ -127,9 +131,7 @@ class LoggingConfig(BaseModel):
     """Logging configuration."""
 
     level: LogLevel = Field(default=LogLevel.INFO)
-    format: str = Field(
-        default="[%(levelname)s] %(message)s"
-    )
+    format: str = Field(default="[%(levelname)s] %(message)s")
     file: Path | None = None
     rotation: str = Field(default="daily")  # daily, size, none
     max_bytes: int = Field(default=10485760)  # 10MB
@@ -176,30 +178,60 @@ class ProjectConfig(BaseModel):
 
         Returns:
             ProjectConfig instance
+
+        Raises:
+            ConfigError: If config file cannot be loaded or parsed
         """
         path = Path(path)
-        if not path.exists():
-            raise FileNotFoundError(f"Config file not found: {path}")
+        try:
+            if not path.exists():
+                raise ConfigError(
+                    f"Configuration file not found: {path}",
+                    ErrorCode.CONFIG_NOT_FOUND,
+                    {"path": str(path)},
+                )
 
-        with open(path, encoding="utf-8") as f:
-            data = yaml.safe_load(f) or {}
+            with open(path, encoding="utf-8") as f:
+                data = yaml.safe_load(f) or {}
 
-        return cls(**data)
+            return cls(**data)
+        except ConfigError:
+            raise
+        except Exception as e:
+            raise ConfigError(
+                f"Failed to load config from {path}: {e}",
+                ErrorCode.CONFIG_PARSE_ERROR,
+                {"path": str(path)},
+                e,
+            )
 
     def to_yaml(self, path: Path | str) -> None:
         """Save configuration to YAML file.
 
         Args:
             path: Path to save YAML configuration
+
+        Raises:
+            FileError: If file writing fails
         """
         path = Path(path)
-        path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
 
-        # Convert to dict, excluding None values
-        data = self.model_dump(exclude_none=True, mode="json")
+            # Convert to dict, excluding None values
+            data = self.model_dump(exclude_none=True, mode="json")
 
-        with open(path, encoding="utf-8") as f:
-            yaml.safe_dump(data, f, default_flow_style=False, allow_unicode=True)
+            with open(path, "w", encoding="utf-8") as f:
+                yaml.safe_dump(data, f, default_flow_style=False, allow_unicode=True)
+        except Exception as e:
+            from md2pdf_pro.errors import ErrorCode, FileError
+
+            raise FileError(
+                f"Failed to save config to {path}: {e}",
+                ErrorCode.FILE_WRITE_ERROR,
+                {"path": str(path)},
+                e,
+            )
 
     @classmethod
     def from_env(cls) -> ProjectConfig:

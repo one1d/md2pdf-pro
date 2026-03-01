@@ -43,14 +43,36 @@ class MarkdownEventHandler:
         self.callback = callback
         self.ignore_patterns = ignore_patterns or [".*", "_*"]
 
+    def dispatch(self, event) -> None:
+        """Dispatch event to appropriate handler."""
+        if event.event_type == "created":
+            self.on_created(event)
+        elif event.event_type == "modified":
+            self.on_modified(event)
+        elif event.event_type == "deleted":
+            self.on_deleted(event)
+        elif event.event_type == "moved":
+            self.on_moved(event)
+
     def _should_ignore(self, path: Path) -> bool:
         """Check if path should be ignored."""
         name = path.name
         for pattern in self.ignore_patterns:
-            if pattern.startswith("*"):
+            if pattern == ".*":
+                # Match all hidden files/folders
+                if name.startswith("."):
+                    return True
+            elif pattern == "_*":
+                # Match all files/folders starting with underscore
+                if name.startswith("_"):
+                    return True
+            elif pattern.startswith("*"):
                 if name.endswith(pattern[1:]):
                     return True
             elif pattern.startswith("."):
+                if name.startswith(pattern):
+                    return True
+            elif pattern.startswith("_"):
                 if name.startswith(pattern):
                     return True
             elif name == pattern:
@@ -65,7 +87,9 @@ class MarkdownEventHandler:
         if self._should_ignore(path):
             return
         if path.suffix.lower() in (".md", ".markdown"):
-            self.callback(FileChange(event_type="created", path=path, is_directory=False))
+            self.callback(
+                FileChange(event_type="created", path=path, is_directory=False)
+            )
 
     def on_modified(self, event) -> None:
         """Handle file modification."""
@@ -75,7 +99,9 @@ class MarkdownEventHandler:
         if self._should_ignore(path):
             return
         if path.suffix.lower() in (".md", ".markdown"):
-            self.callback(FileChange(event_type="modified", path=path, is_directory=False))
+            self.callback(
+                FileChange(event_type="modified", path=path, is_directory=False)
+            )
 
     def on_deleted(self, event) -> None:
         """Handle file deletion."""
@@ -85,7 +111,9 @@ class MarkdownEventHandler:
         if self._should_ignore(path):
             return
         if path.suffix.lower() in (".md", ".markdown"):
-            self.callback(FileChange(event_type="deleted", path=path, is_directory=False))
+            self.callback(
+                FileChange(event_type="deleted", path=path, is_directory=False)
+            )
 
     def on_moved(self, event) -> None:
         """Handle file move."""
@@ -93,15 +121,25 @@ class MarkdownEventHandler:
             return
         # Treat moved files as deleted + created
         src_path = Path(event.src_path)
-        dest_path = Path(event.dest_path)
 
-        if not self._should_ignore(dest_path):
-            if dest_path.suffix.lower() in (".md", ".markdown"):
-                self.callback(FileChange(event_type="created", path=dest_path, is_directory=False))
+        # Handle case where dest_path is None
+        if hasattr(event, "dest_path") and event.dest_path:
+            dest_path = Path(event.dest_path)
+            if not self._should_ignore(dest_path):
+                if dest_path.suffix.lower() in (".md", ".markdown"):
+                    self.callback(
+                        FileChange(
+                            event_type="created", path=dest_path, is_directory=False
+                        )
+                    )
 
-        if not self._should_ignore(src_path):
-            if src_path.suffix.lower() in (".md", ".markdown"):
-                self.callback(FileChange(event_type="deleted", path=src_path, is_directory=False))
+            if not self._should_ignore(src_path):
+                if src_path.suffix.lower() in (".md", ".markdown"):
+                    self.callback(
+                        FileChange(
+                            event_type="deleted", path=src_path, is_directory=False
+                        )
+                    )
 
 
 class FileWatcher:
@@ -136,7 +174,12 @@ class FileWatcher:
         self.callback = callback
         self.recursive = recursive
         self.debounce_ms = debounce_ms
-        self.ignore_patterns = ignore_patterns or [".*", "_*", "node_modules", "__pycache__"]
+        self.ignore_patterns = ignore_patterns or [
+            ".*",
+            "_*",
+            "node_modules",
+            "__pycache__",
+        ]
 
         self._observer: Observer | None = None
         self._pending_changes: dict[Path, asyncio.Task[None]] = {}
@@ -172,29 +215,36 @@ class FileWatcher:
             self._observer.join(timeout=5)
             self._observer = None
 
-            # Cancel pending debounce tasks
-            for task in self._pending_changes.values():
-                if not task.done():
-                    task.cancel()
+            # Clear pending changes
+            self._pending_changes.clear()
 
             logger.info(f"Stopped watching: {self.watch_path}")
 
     def _handle_change(self, change: FileChange) -> None:
         """Handle file change with debouncing."""
-        path = change.path
+        path = change.path.resolve()  # Normalize path
 
-        # Cancel existing pending task for this path
+        # Remove existing pending task for this path
         if path in self._pending_changes:
-            self._pending_changes[path].cancel()
+            self._pending_changes.pop(path)
 
         # Schedule new debounced callback
-        async def debounced_callback():
-            await asyncio.sleep(self.debounce_ms / 1000)
-            self.callback([path])
-            self._pending_changes.pop(path, None)
+        def debounced_callback():
+            import time
 
-        task = asyncio.create_task(debounced_callback())
-        self._pending_changes[path] = task
+            time.sleep(self.debounce_ms / 1000)
+            if path not in self._pending_changes:
+                self.callback([path])
+
+        # Use thread instead of asyncio for simplicity
+        import threading
+
+        thread = threading.Thread(target=debounced_callback)
+        thread.daemon = True
+        thread.start()
+
+        # Store thread reference
+        self._pending_changes[path] = thread
 
     def is_running(self) -> bool:
         """Check if watcher is running."""
@@ -309,7 +359,15 @@ async def watch_and_convert(
             pending.add(change)
 
         # Schedule processing
-        asyncio.create_task(process_pending())
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(process_pending())
+        except RuntimeError:
+            # No running loop, create a new one
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(process_pending())
+            loop.close()
 
     manager = get_watch_manager()
     manager.add_watch(

@@ -49,8 +49,12 @@ def version_callback(value: bool):
 
 @app.callback()
 def main(
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose output"),
-    version: bool = typer.Option(None, "--version", callback=version_callback, is_eager=True),
+    verbose: bool = typer.Option(
+        False, "--verbose", "-v", help="Enable verbose output"
+    ),
+    version: bool = typer.Option(
+        None, "--version", callback=version_callback, is_eager=True
+    ),
 ):
     """MD2PDF Pro - Batch Markdown to PDF Converter."""
     if verbose:
@@ -59,11 +63,21 @@ def main(
 
 @app.command()
 def convert(
-    input_file: Path = typer.Argument(..., exists=True, file_okay=True, dir_okay=False, help="Input Markdown file"),
-    output: Path | None = typer.Option(None, "--output", "-o", help="Output PDF file (default: same name as input)"),
-    config: Path | None = typer.Option(None, "--config", "-c", help="Configuration file"),
-    template: Path | None = typer.Option(None, "--template", "-t", help="Pandoc template"),
-    workers: int = typer.Option(8, "--workers", "-w", help="Number of concurrent workers"),
+    input_file: Path = typer.Argument(
+        ..., exists=True, file_okay=True, dir_okay=False, help="Input Markdown file"
+    ),
+    output: Path | None = typer.Option(
+        None, "--output", "-o", help="Output PDF file (default: same name as input)"
+    ),
+    config: Path | None = typer.Option(
+        None, "--config", "-c", help="Configuration file"
+    ),
+    template: Path | None = typer.Option(
+        None, "--template", "-t", help="Pandoc template"
+    ),
+    workers: int = typer.Option(
+        8, "--workers", "-w", help="Number of concurrent workers"
+    ),
 ):
     """Convert a Markdown file to PDF."""
     # Load configuration
@@ -75,6 +89,9 @@ def convert(
     project_config.processing.max_workers = workers
 
     # Set output path
+    # 逻辑：如果未指定输出文件，则使用输入文件名（后缀改为.pdf）
+    # 如果指定的是目录，则在目录中使用输入文件名
+    # 如果指定的文件名没有.pdf后缀，则添加后缀
     if output is None:
         output = input_file.with_suffix(".pdf")
     elif output.is_dir():
@@ -83,13 +100,6 @@ def convert(
     elif output.suffix.lower() != ".pdf":
         # Ensure output has .pdf extension
         output = output.with_suffix(".pdf")
-    if output is None:
-        output = input_file.with_suffix(".pdf")
-    elif output.is_dir():
-        # If output is a directory, use input filename inside it
-        output = output / f"{input_file.stem}.pdf"
-    if output is None:
-        output = input_file.with_suffix(".pdf")
 
     console.print(f"[cyan]Converting:[/cyan] {input_file.name}")
 
@@ -104,13 +114,27 @@ def convert(
 
 @app.command()
 def batch(
-    input_pattern: str = typer.Argument(..., help="File pattern (e.g., '*.md', 'docs/*.md')"),
-    output_dir: Path = typer.Option(Path("./output"), "--output", "-o", help="Output directory"),
-    config: Path | None = typer.Option(None, "--config", "-c", help="Configuration file"),
-    recursive: bool = typer.Option(False, "--recursive", "-r", help="Process subdirectories"),
-    ignore: list[str] | None = typer.Option(None, "--ignore", "-i", help="Patterns to ignore"),
-    workers: int = typer.Option(8, "--workers", "-w", help="Number of concurrent workers"),
-    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be processed"),
+    input_pattern: str = typer.Argument(
+        ..., help="File pattern (e.g., '*.md', 'docs/*.md')"
+    ),
+    output_dir: Path = typer.Option(
+        Path("./output"), "--output", "-o", help="Output directory"
+    ),
+    config: Path | None = typer.Option(
+        None, "--config", "-c", help="Configuration file"
+    ),
+    recursive: bool = typer.Option(
+        False, "--recursive", "-r", help="Process subdirectories"
+    ),
+    ignore: list[str] | None = typer.Option(
+        None, "--ignore", "-i", help="Patterns to ignore"
+    ),
+    workers: int = typer.Option(
+        8, "--workers", "-w", help="Number of concurrent workers"
+    ),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help="Show what would be processed"
+    ),
 ):
     """Convert multiple Markdown files to PDF."""
     # Load configuration
@@ -149,11 +173,19 @@ def batch(
 
 @app.command()
 def watch(
-    directory: Path = typer.Argument(..., exists=True, file_okay=False, dir_okay=True, help="Directory to watch"),
-    output_dir: Path = typer.Option(Path("./output"), "--output", "-o", help="Output directory"),
-    recursive: bool = typer.Option(True, "--recursive", "-r", help="Watch subdirectories"),
+    directory: Path = typer.Argument(
+        ..., exists=True, file_okay=False, dir_okay=True, help="Directory to watch"
+    ),
+    output_dir: Path = typer.Option(
+        Path("./output"), "--output", "-o", help="Output directory"
+    ),
+    recursive: bool = typer.Option(
+        True, "--recursive", "-r", help="Watch subdirectories"
+    ),
     debounce: int = typer.Option(500, "--debounce", "-d", help="Debounce delay in ms"),
-    workers: int = typer.Option(8, "--workers", "-w", help="Number of concurrent workers"),
+    workers: int = typer.Option(
+        8, "--workers", "-w", help="Number of concurrent workers"
+    ),
 ):
     """Watch directory for changes and convert automatically."""
     # Load configuration
@@ -178,8 +210,12 @@ def watch(
 
 @app.command()
 def init(
-    path: Path = typer.Option(Path("md2pdf.yaml"), "--path", "-p", help="Config file path"),
-    force: bool = typer.Option(False, "--force", "-f", help="Overwrite existing config"),
+    path: Path = typer.Option(
+        Path("md2pdf.yaml"), "--path", "-p", help="Config file path"
+    ),
+    force: bool = typer.Option(
+        False, "--force", "-f", help="Overwrite existing config"
+    ),
 ):
     """Initialize configuration file."""
     if path.exists() and not force:
@@ -195,7 +231,9 @@ def init(
 
 @app.command()
 def config_show(
-    config: Path | None = typer.Option(None, "--config", "-c", help="Configuration file"),
+    config: Path | None = typer.Option(
+        None, "--config", "-c", help="Configuration file"
+    ),
 ):
     """Show current configuration."""
     project_config = _load_config(config)
@@ -225,6 +263,7 @@ def doctor(
 
     # Check Python version
     import platform
+
     python_version = platform.python_version()
     console.print(f"[cyan]Python:[/cyan] {python_version}")
 
@@ -252,7 +291,9 @@ def doctor(
         console.print("  npm install -g @mermaid-js/mermaid-cli")
 
     if fix:
-        console.print("\n[yellow]Auto-fix not implemented. Please install dependencies manually.[/yellow]")
+        console.print(
+            "\n[yellow]Auto-fix not implemented. Please install dependencies manually.[/yellow]"
+        )
 
 
 def _load_config(config_path: Path | None) -> ProjectConfig:

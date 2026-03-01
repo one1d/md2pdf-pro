@@ -14,6 +14,7 @@ import tempfile
 from pathlib import Path
 
 from md2pdf_pro.config import MermaidConfig, MermaidFormat, MermaidTheme
+from md2pdf_pro.errors import DependencyError, ErrorCode, MermaidError
 
 logger = logging.getLogger(__name__)
 
@@ -38,24 +39,6 @@ SUPPORTED_DIAGRAMS = {
     "gitgraph",
     "requirement",
 }
-
-
-class MermaidError(Exception):
-    """Base exception for Mermaid processing errors."""
-
-    pass
-
-
-class MermaidNotFoundError(MermaidError):
-    """Raised when mmdc command is not found."""
-
-    pass
-
-
-class MermaidRenderError(MermaidError):
-    """Raised when Mermaid rendering fails."""
-
-    pass
 
 
 class MermaidPreprocessor:
@@ -132,7 +115,10 @@ class MermaidPreprocessor:
             code_hash = compute_hash(mermaid_code)
 
             # Determine output file path
-            output_file = self._output_dir / f"{file_id}_{idx}_{code_hash}.{self.config.format.value}"
+            output_file = (
+                self._output_dir
+                / f"{file_id}_{idx}_{code_hash}.{self.config.format.value}"
+            )
 
             # Render or get cached
             try:
@@ -143,9 +129,14 @@ class MermaidPreprocessor:
 
                 # Replace code block with image reference
                 if self.config.format == MermaidFormat.PDF:
-                    # For PDF, use LaTeX includegraphics or markdown image
-                    image_ref = f"\\includegraphics[width={{\\linewidth}}]{{{output_file}}}\n\n"
+                    # For PDF, use LaTeX includegraphics with properly escaped path
+                    # LaTeX requires forward slashes even on Windows
+                    latex_path = str(output_file).replace("\\", "/")
+                    image_ref = (
+                        f"\\includegraphics[width={{\\linewidth}}]{{{latex_path}}}\n\n"
+                    )
                 else:
+                    # For Markdown, use relative path if possible
                     image_ref = f"![]({output_file})\n"
 
                 # Apply offset for next replacement
@@ -162,19 +153,23 @@ class MermaidPreprocessor:
 
         return new_content, generated_files
 
-    async def _render_mermaid(
-        self, code: str, output_path: Path
-    ) -> None:
+    async def _render_mermaid(self, code: str, output_path: Path) -> None:
         """Render Mermaid code to PDF/SVG.
 
         Args:
             code: Mermaid diagram code
             output_path: Output file path
+
+        Raises:
+            DependencyError: If mmdc is not found
+            MermaidError: If rendering fails
         """
         if not self.is_available():
-            raise MermaidNotFoundError(
+            raise DependencyError(
                 "mmdc command not found. Please install mermaid-cli: "
-                "npm install -g @mermaid-js/mermaid-cli"
+                "npm install -g @mermaid-js/mermaid-cli",
+                ErrorCode.DEPENDENCY_MISSING,
+                {"dependency": "mermaid-cli"},
             )
 
         # Create temporary input file
@@ -198,18 +193,28 @@ class MermaidPreprocessor:
 
             if result.returncode != 0:
                 error_msg = result.stderr or result.stdout
-                raise MermaidRenderError(f"Mermaid rendering failed: {error_msg}")
+                raise MermaidError(
+                    f"Mermaid rendering failed: {error_msg}",
+                    ErrorCode.MERMAID_RENDER_ERROR,
+                    {
+                        "input_path": str(input_path),
+                        "output_path": str(output_path),
+                        "error_code": result.returncode,
+                    },
+                )
 
             if not output_path.exists():
-                raise MermaidRenderError(f"Output file not created: {output_path}")
+                raise MermaidError(
+                    f"Output file not created: {output_path}",
+                    ErrorCode.MERMAID_RENDER_ERROR,
+                    {"output_path": str(output_path)},
+                )
 
         finally:
             # Clean up input file
             input_path.unlink(missing_ok=True)
 
-    def _build_command(
-        self, input_path: Path, output_path: Path
-    ) -> list[str]:
+    def _build_command(self, input_path: Path, output_path: Path) -> list[str]:
         """Build mmdc command arguments.
 
         Args:
@@ -221,10 +226,14 @@ class MermaidPreprocessor:
         """
         cmd = [
             "mmdc",
-            "-i", str(input_path),
-            "-o", str(output_path),
-            "-w", str(self.config.width),
-            "-b", self.config.background,
+            "-i",
+            str(input_path),
+            "-o",
+            str(output_path),
+            "-w",
+            str(self.config.width),
+            "-b",
+            self.config.background,
         ]
 
         # Add theme if not default
@@ -276,12 +285,12 @@ def diagram_line_matches(line: str, diagram_type: str) -> bool:
     """
     # Handle aliases
     if diagram_type in ("flowchart", "graph"):
-        return "flowchart" in line or line.startswith("graph")
+        return "flowchart" in line.lower() or line.lower().startswith("graph")
     if diagram_type == "sequencediagram":
-        return "sequencediagram" in line
+        return "sequencediagram" in line.lower()
     if diagram_type == "classdiagram":
-        return "classdiagram" in line
+        return "classdiagram" in line.lower()
     if diagram_type == "statediagram":
-        return "statediagram" in line or "state" in line
+        return "statediagram" in line.lower() or "state" in line.lower()
 
-    return diagram_type in line
+    return diagram_type in line.lower()

@@ -5,6 +5,20 @@ __author__ = "Guoqin Chen"
 
 from md2pdf_pro.config import ProjectConfig
 from md2pdf_pro.converter import PandocEngine
+from md2pdf_pro.errors import (
+    BatchError,
+    CLIError,
+    ConfigError,
+    ConversionError,
+    DependencyError,
+    ErrorCode,
+    FileError,
+    MD2PDFError,
+    MermaidError,
+    WatcherError,
+    format_error,
+    handle_error,
+)
 from md2pdf_pro.parallel import BatchProcessor
 from md2pdf_pro.preprocessor import MermaidPreprocessor
 
@@ -13,4 +27,16 @@ __all__ = [
     "PandocEngine",
     "MermaidPreprocessor",
     "BatchProcessor",
+    "MD2PDFError",
+    "ConfigError",
+    "DependencyError",
+    "FileError",
+    "ConversionError",
+    "MermaidError",
+    "WatcherError",
+    "BatchError",
+    "CLIError",
+    "ErrorCode",
+    "handle_error",
+    "format_error",
 ]

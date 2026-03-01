@@ -142,9 +142,13 @@ class BatchProcessor:
         # Process all items
         async def process_with_semaphore(item: Path) -> ProcessingResult:
             async with semaphore:
-                return await self._process_with_retry(
+                result = await self._process_with_retry(
                     item, process_fn, retry_attempts, retry_backoff
                 )
+                # Update progress after each item
+                if self.progress and self._task_id is not None:
+                    self.progress.update(self._task_id, advance=1)
+                return result
 
         # Run all tasks concurrently
         tasks = [process_with_semaphore(item) for item in items]
@@ -174,7 +178,6 @@ class BatchProcessor:
 
         # Update progress to complete
         if self.progress and self._task_id is not None:
-            self.progress.update(self._task_id, completed=len(items))
             self.progress.stop()
 
         # Calculate statistics
@@ -283,7 +286,9 @@ class AdaptiveBatchProcessor(BatchProcessor):
             show_progress: Whether to show progress
             console: Rich console instance
         """
-        super().__init__(max_workers=base_workers, show_progress=show_progress, console=console)
+        super().__init__(
+            max_workers=base_workers, show_progress=show_progress, console=console
+        )
         self.base_workers = base_workers
         self.cpu_threshold = cpu_threshold
         self.memory_threshold = memory_threshold
@@ -301,10 +306,16 @@ class AdaptiveBatchProcessor(BatchProcessor):
             memory_percent = psutil.virtual_memory().percent
 
             # Reduce workers if system is under load
-            if cpu_percent > self.cpu_threshold or memory_percent > self.memory_threshold:
+            if (
+                cpu_percent > self.cpu_threshold
+                or memory_percent > self.memory_threshold
+            ):
                 # Aggressive reduction
                 return max(2, self.base_workers // 2)
-            elif cpu_percent > self.cpu_threshold / 2 or memory_percent > self.memory_threshold / 2:
+            elif (
+                cpu_percent > self.cpu_threshold / 2
+                or memory_percent > self.memory_threshold / 2
+            ):
                 # Moderate reduction
                 return max(2, int(self.base_workers * 0.75))
 

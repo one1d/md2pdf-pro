@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from md2pdf_pro.config import FontConfig, PandocConfig
+from md2pdf_pro.errors import ConversionError, DependencyError, ErrorCode
 
 logger = logging.getLogger(__name__)
 
@@ -27,30 +28,6 @@ class ConversionResult:
     error: str | None = None
     error_code: int | None = None
     duration_ms: float = 0.0
-
-
-class PandocError(Exception):
-    """Base exception for Pandoc errors."""
-
-    pass
-
-
-class PandocNotFoundError(PandocError):
-    """Raised when Pandoc command is not found."""
-
-    pass
-
-
-class PandocConversionError(PandocError):
-    """Raised when Pandoc conversion fails."""
-
-    pass
-
-
-class PandocTimeoutError(PandocError):
-    """Raised when Pandoc conversion times out."""
-
-    pass
 
 
 class PandocEngine:
@@ -132,11 +109,17 @@ class PandocEngine:
 
         Returns:
             ConversionResult with success status and details
+
+        Raises:
+            DependencyError: If pandoc is not found
+            ConversionError: If conversion fails
         """
         if not self.is_available():
-            raise PandocNotFoundError(
+            raise DependencyError(
                 "pandoc command not found. Please install Pandoc: "
-                "https://pandoc.org/installing.html"
+                "https://pandoc.org/installing.html",
+                ErrorCode.DEPENDENCY_MISSING,
+                {"dependency": "pandoc"},
             )
 
         # Ensure output directory exists
@@ -166,12 +149,14 @@ class PandocEngine:
             except TimeoutError:
                 process.kill()
                 await process.wait()
-                duration = (asyncio.get_event_loop().time() - start_time) * 1000
-                return ConversionResult(
-                    success=False,
-                    error="Conversion timed out",
-                    error_code=-1,
-                    duration_ms=duration,
+                raise ConversionError(
+                    "Conversion timed out",
+                    ErrorCode.CONVERSION_TIMEOUT,
+                    {
+                        "input_file": str(input_file),
+                        "output_file": str(output_file),
+                        "timeout": timeout,
+                    },
                 )
 
             duration = (asyncio.get_event_loop().time() - start_time) * 1000
@@ -184,24 +169,33 @@ class PandocEngine:
                 )
             else:
                 error_msg = stderr.decode() if stderr else "Unknown error"
-                return ConversionResult(
-                    success=False,
-                    error=error_msg,
-                    error_code=process.returncode,
-                    duration_ms=duration,
+                raise ConversionError(
+                    f"Pandoc conversion failed: {error_msg}",
+                    ErrorCode.CONVERSION_FAILED,
+                    {
+                        "input_file": str(input_file),
+                        "output_file": str(output_file),
+                        "error_code": process.returncode,
+                    },
                 )
 
         except FileNotFoundError:
-            return ConversionResult(
-                success=False,
-                error="pandoc command not found",
-                error_code=-2,
+            raise DependencyError(
+                "pandoc command not found",
+                ErrorCode.DEPENDENCY_MISSING,
+                {"dependency": "pandoc"},
             )
+        except (DependencyError, ConversionError):
+            raise
         except Exception as e:
-            return ConversionResult(
-                success=False,
-                error=str(e),
-                error_code=-99,
+            raise ConversionError(
+                f"An error occurred during conversion: {str(e)}",
+                ErrorCode.CONVERSION_FAILED,
+                {
+                    "input_file": str(input_file),
+                    "output_file": str(output_file),
+                },
+                e,
             )
 
     def _build_args(
@@ -222,7 +216,8 @@ class PandocEngine:
         """
         args: list[str] = [
             str(input_file),
-            "-o", str(output_file),
+            "-o",
+            str(output_file),
             "--standalone" if self.config.standalone else "",
             f"--pdf-engine={self.config.pdf_engine.value}",
             f"--highlight-style={self.config.highlight_style}",
@@ -267,24 +262,36 @@ class PandocEngine:
         args: list[str] = []
 
         # CJK main font
-        args.extend([
-            "-V", f"CJKmainfont={self.font_config.cjk_primary}",
-        ])
+        args.extend(
+            [
+                "-V",
+                f"CJKmainfont={self.font_config.cjk_primary}",
+            ]
+        )
 
         # Latin main font
-        args.extend([
-            "-V", f"mainfont={self.font_config.latin_primary}",
-        ])
+        args.extend(
+            [
+                "-V",
+                f"mainfont={self.font_config.latin_primary}",
+            ]
+        )
 
         # Monospace font
-        args.extend([
-            "-V", f"monofont={self.font_config.monospace}",
-        ])
+        args.extend(
+            [
+                "-V",
+                f"monofont={self.font_config.monospace}",
+            ]
+        )
 
         # Geometry (page margins)
-        args.extend([
-            "-V", f"geometry:margin={self.font_config.geometry_margin}",
-        ])
+        args.extend(
+            [
+                "-V",
+                f"geometry:margin={self.font_config.geometry_margin}",
+            ]
+        )
 
         return args
 
