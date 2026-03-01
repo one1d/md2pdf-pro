@@ -22,6 +22,7 @@ from md2pdf_pro.config import (
 from md2pdf_pro.converter import PandocEngine, check_dependencies, optimize_pdf
 from md2pdf_pro.parallel import BatchProcessor
 from md2pdf_pro.preprocessor import MermaidPreprocessor
+from md2pdf_pro.templates import get_chinese_journal_params
 
 # Initialize console
 console = Console()
@@ -96,11 +97,57 @@ def convert(
     watermark_text: str = typer.Option(
         "CONFIDENTIAL", "--watermark-text", help="Watermark text",
     ),
+    # Chinese journal template options
+    journal_title: str = typer.Option(
+        "", "--journal-title", help="Chinese journal name",
+    ),
+    journal_vol: str = typer.Option(
+        "", "--journal-vol", help="Journal volume number",
+    ),
+    journal_issue: str = typer.Option(
+        "", "--journal-issue", help="Journal issue number",
+    ),
+    journal_year: str = typer.Option(
+        "", "--journal-year", help="Publication year",
+    ),
+    article_doi: str = typer.Option(
+        "", "--doi", help="Article DOI",
+    ),
+    affiliation: str = typer.Option(
+        "", "--affiliation", help="Author affiliation",
+    ),
+    email: str = typer.Option(
+        "", "--email", help="Author email",
+    )
 ):
 
     """Convert a Markdown file to PDF."""
     # Load configuration
     project_config = _load_config(config)
+
+    # Chinese journal template parameters
+    journal_params = get_chinese_journal_params(
+        journal_title=journal_title,
+        article_title=title,
+        author=author,
+        affiliation=affiliation,
+        email=email,
+        doi=article_doi,
+        journal_vol=journal_vol,
+        journal_issue=journal_issue,
+        journal_year=journal_year,
+    )
+
+    # Apply journal template if specified
+    if journal_title:
+        # Get chinese_journal template if not already using custom template
+        if not template:
+            from md2pdf_pro.templates import get_template
+            journal_template = get_template("chinese_journal")
+            if journal_template:
+                project_config.pandoc.template = journal_template
+
+        project_config.pandoc.template_vars.update(journal_params)
 
     # Override with CLI arguments
     if template:
@@ -118,9 +165,6 @@ def convert(
     if watermark_text:
         project_config.pdf.watermark.text = watermark_text
 
-    if template:
-        project_config.pandoc.template = template
-    project_config.processing.max_workers = workers
 
     # Set output path
     # 逻辑：如果未指定输出文件，则使用输入文件名（后缀改为.pdf）

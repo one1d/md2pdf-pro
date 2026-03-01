@@ -17,6 +17,7 @@ class BuiltinTemplate(str, Enum):
     ACADEMIC = "academic"
     REPORT = "report"
     MINIMAL = "minimal"
+    CHINESE_JOURNAL = "chinese_journal"
 
 
 @dataclass
@@ -114,3 +115,82 @@ def ensure_user_template_dir() -> Path:
     """
     USER_TEMPLATE_DIR.mkdir(parents=True, exist_ok=True)
     return USER_TEMPLATE_DIR
+
+
+def get_chinese_journal_params(
+    journal_title: str = "",
+    article_title: str = "",
+    subtitle: str = "",
+    author: str = "",
+    affiliation: str = "",
+    email: str = "",
+    abstract: str = "",
+    keywords: str = "",
+    abstract_en: str = "",
+    keywords_en: str = "",
+    doi: str = "",
+    article_id: str = "",
+    journal_vol: str = "",
+    journal_issue: str = "",
+    journal_year: str = "",
+    journal_date: str = "",
+) -> dict[str, str]:
+    """Generate template variables for Chinese journal template.
+
+    Args:
+        journal_title: Journal name (期刊名称)
+        article_title: Article title (文章标题)
+        subtitle: Subtitle (副标题)
+        author: Author names (作者)
+        affiliation: Author affiliations (单位)
+        email: Email address (邮箱)
+        abstract: Chinese abstract (摘要)
+        keywords: Chinese keywords (关键词)
+        abstract_en: English abstract
+        keywords_en: English keywords
+        doi: DOI number
+        article_id: Article ID (文章编号)
+        journal_vol: Volume number (卷号)
+        journal_issue: Issue number (期号)
+        journal_year: Publication year (年份)
+        journal_date: Publication date (日期)
+
+    Returns:
+        Dictionary of template variables
+    """
+    params: dict[str, str] = {}
+
+    if journal_title:
+        params["journal-title"] = journal_title
+    if article_title:
+        params["title"] = article_title
+    if subtitle:
+        params["subtitle"] = subtitle
+    if author:
+        params["author"] = author
+    if affiliation:
+        params["affiliation"] = affiliation
+    if email:
+        params["email"] = email
+    if abstract:
+        params["abstract"] = abstract
+    if keywords:
+        params["keywords"] = keywords
+    if abstract_en:
+        params["abstract-en"] = abstract_en
+    if keywords_en:
+        params["keywords-en"] = keywords_en
+    if doi:
+        params["doi"] = doi
+    if article_id:
+        params["article-id"] = article_id
+    if journal_vol:
+        params["journal-vol"] = journal_vol
+    if journal_issue:
+        params["journal-issue"] = journal_issue
+    if journal_year:
+        params["journal-year"] = journal_year
+    if journal_date:
+        params["journal-date"] = journal_date
+
+    return params

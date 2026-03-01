@@ -1,0 +1,306 @@
+$if(tectonic-texlive)$
+%!TEX TS-program = tectonic
+$endif$
+\documentclass[$if(fontsize)$$fontsize$,$endif$$for(classoption)$$classoption$$sep$,$endfor$]{$documentclass$}
+\usepackage{ctex}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{fixltx2e}
+\usepackage{color}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\usepackage[colorlinks=true,linkcolor=blue,anchorcolor=blue,citecolor=blue,filecolor=blue,menucolor=blue,urlcolor=blue]{hyperref}
+
+% Geometry settings
+$if(margin)$
+\usepackage[$for(margin)$$margin$$sep$,$endfor$]{geometry}
+$else$
+\usepackage[top=2.5cm,bottom=2.5cm,left=2.5cm,right=2.5cm]{geometry}
+$endif$
+
+% Line spacing
+$if(lineheight)$
+\usepackage{setspace}
+\setstretch{$lineheight$}
+$endif$
+
+% Font settings
+$if(CJKmainfont)$
+\usepackage{xeCJK}
+\setCJKmainfont[$for(CJKoptions)$$CJKoptions$$sep$,$endfor$]{$CJKmainfont$}
+$if(CJKsansfont)$
+\setCJKsansfont[$for(CJKoptions)$$CJKoptions$$sep$,$endfor$]{$CJKsansfont$}
+$endif$
+$if(CJKmonofont)$
+\setCJKmonofont[$for(CJKoptions)$$CJKoptions$$sep$,$endfor$]{$CJKmonofont$}
+$endif$
+$endif$
+
+$if(mainfont)$
+\usepackage{fontspec}
+\setmainfont[$for(mainfontoptions)$$mainfontoptions$$sep$,$endfor$]{$mainfont$}
+$endif$
+
+% Bibliography
+$if(natbib)$
+\usepackage{natbib}
+\bibliographystyle{$if(biblio-style)$$biblio-style$/$else$gb7714-2015$endif$}
+$endif$
+
+$if(biblatex)$
+\usepackage[$if(biblio-style)$style=$biblio-style$,$endif$$for(biblatexoptions)$$biblatexoptions$$sep$,$endfor$]{biblatex}
+$endif$
+
+% Fancyhdr setup
+\fancyhf{}
+\fancyhead[C]{\small \nouppercase\leftmark}
+\fancyfoot[C]{\small \thepage}
+\pagestyle{fancy}
+
+% Redefine maketitle for journal format
+\makeatletter
+$if(journal-title)$
+\def\journalname{$journal-title$}
+$else$
+\def\journalname{}
+$endif$
+
+$if(journal-vol)$
+\def\volumenumber{$journal-vol$}
+$else$
+\def\volumenumber{}
+$endif$
+
+$if(journal-issue)$
+\def\issuenumber{$journal-issue$}
+$else$
+\def\issuenumber{}
+$endif$
+
+$if(journal-year)$
+\def\journalyear{$journal-year$}
+$else$
+\def\journalyear{}
+$endif$
+
+$if(journal-date)$
+\def\journaldate{$journal-date$}
+$else$
+\def\journaldate{}
+$endif$
+
+$if(doi)$
+\def\paperdoi{$doi$}
+$else$
+\def\paperdoi{}
+$endif$
+
+$if(article-id)$
+\def\articleid{$article-id$}
+$else$
+\def\articleid{}
+$endif$
+
+% Chinese journal title format
+$if(title)$
+\title{$title$}
+$endif$
+
+$if(subtitle)$
+\subtitle{$subtitle$}
+$endif$
+
+$if(author)$
+\author{$for(author)$$author.name$$sep$, $endfor$}
+$endif$
+
+$if(affiliation)$
+\affiliation{$for(affiliation)$$affiliation$$sep$; $endfor$}
+$endif$
+
+$if(email)$
+\email{$email$}
+$endif$
+
+$if(abstract)$
+\abstract{$abstract$}
+$endif$
+
+$if(keywords)$
+\keywords{$keywords$}
+$endif$
+
+% Custom commands
+\makeatletter
+\newcommand{\email}[1]{\gdef\@email{#1}}
+\newcommand{\affiliation}[1]{\gdef\@affiliation{#1}}
+\makeatother
+
+% Header customization
+$if(header-includes)$
+$for(header-includes)$
+$header-includes$
+$endfor$
+$endif$
+
+% Listings
+$if Listings 4.0 loaded$
+\lstset{basicstyle=\small\ttfamily,breaklines=true}
+$else$
+\usepackage{listings}
+\lstset{basicstyle=\small\ttfamily,breaklines=true}
+$endif$
+
+% Line numbers
+$if(line-numbers)$
+\makeatletter
+\preto{\@verbatim}{\topsep=0pt \partopsep=0pt}
+\makeatother
+$endif$
+
+\makeatletter
+$if(compact-title)$
+\let\inserttitle\@empty
+\let\insertsubtitle\@empty
+$endif$
+\makeatother
+
+\begin{document}
+
+% Chinese journal header
+\thispagestyle{empty}
+\begin{center}
+$if(journal-title)$
+{\fontsize{16pt}{20pt}\selectfont \textbf{$journal-title$}}\par
+$endif$
+$if(journal-vol)$
+\quad 第 \textbf{$journal-vol$} 卷\quad 第 \textbf{$journal-issue$} 期\quad \textbf{$journal-year$} 年
+$endif$
+\end{center}
+
+$if(title)$
+\vspace{0.5cm}
+\begin{center}
+{\fontsize{18pt}{22pt}\selectfont \textbf{$title$}}
+$if(subtitle)$
+\\[0.3cm]
+{\fontsize{14pt}{18pt}\selectfont $subtitle$}
+$endif$
+\end{center}
+$endif$
+
+$if(author)$
+\vspace{0.5cm}
+\begin{center}
+$for(author)$
+{\fontsize{12pt}{16pt}\selectfont $author.name$}$sep$\quad
+$endfor$
+\end{center}
+$endif$
+
+$if(affiliation)$
+\begin{center}
+{\fontsize{10pt}{14pt}\selectfont \textit{$for(affiliation)$$affiliation$$sep$; $endfor$}}
+\end{center}
+$endif$
+
+$if(email)$
+\begin{center}
+{\fontsize{10pt}{14pt}\selectfont Email: $email$}
+\end{center}
+$endif$
+
+% Abstract
+$if(abstract)$
+\vspace{0.5cm}
+\begin{center}
+{\fontsize{12pt}{16pt}\selectfont \textbf{摘\quad 要}}
+\end{center}
+\begin{minipage}{\linewidth}
+{\fontsize{11pt}{15pt}\selectfont $abstract$}
+\end{minipage}
+$endif$
+
+% Keywords
+$if(keywords)$
+\vspace{0.3cm}
+\begin{center}
+{\fontsize{11pt}{15pt}\selectfont \textbf{关键词:}} {\fontsize{11pt}{15pt}\selectfont $keywords$}
+\end{center}
+$endif$
+
+% English abstract (if provided)
+$if(abstract-en)$
+\vspace{0.5cm}
+\begin{center}
+{\fontsize{12pt}{16pt}\selectfont \textbf{Abstract}}
+\end{center}
+\begin{minipage}{\linewidth}
+{\fontsize{11pt}{15pt}\selectfont $abstract-en$}
+\end{minipage}
+$endif$
+
+$if(keywords-en)$
+\vspace{0.3cm}
+\begin{center}
+{\fontsize{11pt}{15pt}\selectfont \textbf{Keywords:}} {\fontsize{11pt}{15pt}\selectfont $keywords-en$}
+\end{center}
+$endif$
+
+% DOI
+$if(doi)$
+\vspace{0.5cm}
+\begin{center}
+{\fontsize{10pt}{14pt}\selectfont DOI: \href{https://doi.org/$doi$}{$doi$}}
+\end{center}
+$endif$
+
+% Article ID
+$if(article-id)$
+\begin{center}
+{\fontsize{10pt}{14pt}\selectfont 文章编号: $article-id$}
+\end{center}
+$endif$
+
+\newpage
+\pagestyle{fancy}
+
+$if(toc)$
+\tableofcontents
+$endif$
+
+$if(lot)$
+\listoftables
+$endif$
+
+$if(lof)$
+\listoffigures
+$endif$
+
+$body$
+
+% References
+$if(natbib)$
+$if(bibliography)$
+\bibliography{$bibliography$}
+$endif$
+$endif$
+
+$if(biblatex)$
+$if(References)$
+\printbibliography[heading=References]
+$else$
+\printbibliography
+$endif$
+$endif$
+
+$for(include-after)$
+$include-after$
+$endfor$
+
+\end{document}
