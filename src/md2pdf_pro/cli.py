@@ -15,10 +15,11 @@ from rich.table import Table
 
 from md2pdf_pro import __version__
 from md2pdf_pro.config import (
+    PdfCompression,
     ProjectConfig,
     get_default_config_path,
 )
-from md2pdf_pro.converter import PandocEngine, check_dependencies
+from md2pdf_pro.converter import PandocEngine, check_dependencies, optimize_pdf
 from md2pdf_pro.parallel import BatchProcessor
 from md2pdf_pro.preprocessor import MermaidPreprocessor
 
@@ -78,12 +79,45 @@ def convert(
     workers: int = typer.Option(
         8, "--workers", "-w", help="Number of concurrent workers"
     ),
+    compression: PdfCompression = typer.Option(
+        PdfCompression.SCREEN,
+        "--compression",
+        help="PDF compression level (none, web, screen, ebook, print, prepress)",
+    ),
+    author: str = typer.Option(
+        "", "--author", help="PDF author",
+    ),
+    title: str = typer.Option(
+        "", "--title", help="PDF title",
+    ),
+    watermark: bool = typer.Option(
+        False, "--watermark", help="Enable watermark",
+    ),
+    watermark_text: str = typer.Option(
+        "CONFIDENTIAL", "--watermark-text", help="Watermark text",
+    ),
 ):
+
     """Convert a Markdown file to PDF."""
     # Load configuration
     project_config = _load_config(config)
 
     # Override with CLI arguments
+    if template:
+        project_config.pandoc.template = template
+    project_config.processing.max_workers = workers
+
+    # PDF optimization settings
+    project_config.pdf.compression = compression
+    if author:
+        project_config.pdf.metadata.author = author
+    if title:
+        project_config.pdf.metadata.title = title
+    if watermark:
+        project_config.pdf.watermark.enabled = True
+    if watermark_text:
+        project_config.pdf.watermark.text = watermark_text
+
     if template:
         project_config.pandoc.template = template
     project_config.processing.max_workers = workers
@@ -106,10 +140,29 @@ def convert(
     # Run conversion
     try:
         asyncio.run(_convert_single(input_file, output, project_config))
+
+        # Apply PDF optimization if enabled
+        if project_config.output.optimize_pdf:
+            temp_output = output
+            optimized_output = output.with_suffix(".optimized.pdf")
+            success = optimize_pdf(
+                temp_output,
+                optimized_output,
+                compression=project_config.pdf.compression,
+                metadata=project_config.pdf.metadata,
+                watermark=project_config.pdf.watermark,
+            )
+            if success:
+                # Replace original with optimized
+                optimized_output.replace(temp_output)
+
         console.print(f"[green]✓[/green] PDF generated: {output}")
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(code=1)
+
+
+
 
 
 @app.command()

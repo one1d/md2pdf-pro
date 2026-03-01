@@ -16,6 +16,10 @@ from pathlib import Path
 from md2pdf_pro.config import MermaidConfig, MermaidFormat, MermaidTheme
 from md2pdf_pro.errors import DependencyError, ErrorCode, MermaidError
 
+# Re-export errors for public API
+MermaidNotFoundError = MermaidError
+MermaidRenderError = MermaidError
+
 logger = logging.getLogger(__name__)
 
 # Regex pattern for Mermaid code blocks

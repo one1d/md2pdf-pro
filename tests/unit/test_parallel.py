@@ -6,6 +6,7 @@ import asyncio
 from pathlib import Path
 
 import pytest
+
 from md2pdf_pro.parallel import (
     AdaptiveBatchProcessor,
     BatchProcessor,

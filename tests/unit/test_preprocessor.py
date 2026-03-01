@@ -5,6 +5,7 @@ from __future__ import annotations
 import subprocess
 
 import pytest
+
 from md2pdf_pro.config import MermaidConfig, MermaidFormat, MermaidTheme
 from md2pdf_pro.preprocessor import (
     MERMAID_PATTERN,

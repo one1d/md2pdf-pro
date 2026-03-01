@@ -13,8 +13,20 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from md2pdf_pro.config import FontConfig, PandocConfig
+from md2pdf_pro.config import (
+    FontConfig,
+    PandocConfig,
+    PdfCompression,
+    PdfMetadataConfig,
+    WatermarkConfig,
+)
 from md2pdf_pro.errors import ConversionError, DependencyError, ErrorCode
+
+# Error class aliases for backwards compatibility
+PandocConversionError = ConversionError
+PandocError = ConversionError
+PandocNotFoundError = DependencyError
+PandocTimeoutError = ConversionError
 
 logger = logging.getLogger(__name__)
 
@@ -332,3 +344,58 @@ def check_dependencies() -> dict[str, bool]:
             pass
 
     return deps
+
+
+def optimize_pdf(
+    input_path: Path,
+    output_path: Path,
+    compression: PdfCompression = PdfCompression.SCREEN,
+    metadata: PdfMetadataConfig | None = None,
+    watermark: WatermarkConfig | None = None,
+) -> bool:
+    """Optimize PDF using Ghostscript.
+
+    Returns True if optimization was applied, False if gs not available.
+    """
+    # Check if ghostscript is available
+    try:
+        result = subprocess.run(
+            ["gs", "--version"],
+            capture_output=True,
+            timeout=5,
+        )
+        if result.returncode != 0:
+            return False
+    except FileNotFoundError:
+        return False
+
+    # Build gs command
+    args = [
+        "gs",
+        "-sDEVICE=pdfwrite",
+        "-dCompatibilityLevel=1.5",
+        "-dNOPAUSE",
+        "-dQUIET",
+        "-dBATCH",
+        f"-sOutputFile={output_path}",
+    ]
+
+    # Compression settings
+    if compression == PdfCompression.NONE:
+        args.extend(["-dPDFSETTINGS=/default"])
+    elif compression == PdfCompression.SCREEN:
+        args.extend(["-dPDFSETTINGS=/screen"])
+    elif compression == PdfCompression.EBOOK:
+        args.extend(["-dPDFSETTINGS=/ebook"])
+    elif compression == PdfCompression.PRINT:
+        args.extend(["-dPDFSETTINGS=/printer"])
+    elif compression == PdfCompression.PREPRESS:
+        args.extend(["-dPDFSETTINGS=/prepress"])
+
+    args.append(str(input_path))
+
+    try:
+        result = subprocess.run(args, capture_output=True, timeout=120)
+        return result.returncode == 0
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return False

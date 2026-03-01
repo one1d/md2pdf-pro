@@ -7,9 +7,10 @@ import tempfile
 from pathlib import Path
 
 import pytest
+from typer.testing import CliRunner
+
 from md2pdf_pro.cli import app
 from md2pdf_pro.config import ProjectConfig
-from typer.testing import CliRunner
 
 
 @pytest.fixture

@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 
 import pytest
+
 from md2pdf_pro.config import (
     FontConfig,
     LoggingConfig,

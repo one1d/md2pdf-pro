@@ -50,6 +50,23 @@ class PdfEngine(str, Enum):
     LUALATEX = "lualatex"
 
 
+class PdfCompression(str, Enum):
+    """PDF compression level."""
+    NONE = "none"
+    WEB = "web"
+    SCREEN = "screen"
+    EBOOK = "ebook"
+    PRINT = "print"
+    PREPRESS = "prepress"
+
+
+class WatermarkPosition(str, Enum):
+    """Watermark position."""
+    CENTER = "center"
+    HEADER = "header"
+    FOOTER = "footer"
+
+
 class LogLevel(str, Enum):
     """Logging level."""
 
@@ -113,7 +130,34 @@ class FontConfig(BaseModel):
     )
     latin_primary: str = Field(default="Times New Roman")
     monospace: str = Field(default="Menlo")
-    geometry_margin: str = Field(default="2.5cm")
+
+
+class PdfMetadataConfig(BaseModel):
+    """PDF metadata configuration."""
+    title: str = Field(default="")
+    author: str = Field(default="")
+    subject: str = Field(default="")
+    keywords: str = Field(default="")
+    creator: str = Field(default="MD2PDF Pro")
+
+
+class WatermarkConfig(BaseModel):
+    """Watermark configuration."""
+    enabled: bool = Field(default=False)
+    text: str = Field(default="CONFIDENTIAL")
+    opacity: float = Field(default=0.3, ge=0.0, le=1.0)
+    position: WatermarkPosition = Field(default=WatermarkPosition.CENTER)
+    angle: int = Field(default=45, ge=-180, le=180)
+    font_size: int = Field(default=48)
+    color: str = Field(default="gray")
+
+
+class PdfOptimizationConfig(BaseModel):
+    """PDF optimization configuration."""
+    compression: PdfCompression = Field(default=PdfCompression.SCREEN)
+    metadata: PdfMetadataConfig = Field(default_factory=PdfMetadataConfig)
+    watermark: WatermarkConfig = Field(default_factory=WatermarkConfig)
+
 
 
 class OutputConfig(BaseModel):
@@ -150,6 +194,8 @@ class ProjectConfig(BaseModel):
     font: FontConfig = Field(default_factory=FontConfig)
     output: OutputConfig = Field(default_factory=OutputConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
+    pdf: PdfOptimizationConfig = Field(default_factory=PdfOptimizationConfig)
+
 
     # File patterns
     input_patterns: list[str] = Field(default_factory=lambda: ["*.md", "*.markdown"])
