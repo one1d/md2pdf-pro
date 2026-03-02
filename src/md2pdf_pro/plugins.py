@@ -49,7 +49,7 @@ class Plugin(ABC):
 class PluginManager:
     """Manages plugin lifecycle and execution."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._plugins: dict[str, Plugin] = {}
         self._enabled: set[str] = set()
 
@@ -88,8 +88,8 @@ class PluginManager:
     def execute_hook(
         self,
         hook_type: PluginHookType,
-        *args,
-        **kwargs,
+        *args: Any,
+        **kwargs: Any,
     ) -> list[Any]:
         """Execute a hook for all enabled plugins."""
         results = []

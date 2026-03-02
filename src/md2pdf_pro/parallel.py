@@ -19,6 +19,7 @@ from rich.progress import (
     BarColumn,
     Progress,
     SpinnerColumn,
+    TaskID,
     TaskProgressColumn,
     TextColumn,
     TimeRemainingColumn,
@@ -94,12 +95,12 @@ class BatchProcessor:
         self.console = console or Console()
         self.semaphore: asyncio.Semaphore | None = None
         self.progress: Progress | None = None
-        self._task_id: int | None = None
+        self._task_id: TaskID | None = None
 
     async def process_batch(
         self,
         items: list[Path],
-        process_fn: Callable[[Path], Awaitable[None]],
+        process_fn: Callable[[Path], Awaitable[Path | None]],
         *,
         task_name: str = "Processing",
         retry_attempts: int = 0,
@@ -121,7 +122,6 @@ class BatchProcessor:
             return BatchResult(total=0, success=0, failed=0, skipped=0)
 
         start_time = time.time()
-        results: list[ProcessingResult] = []
         semaphore = asyncio.Semaphore(self.max_workers)
 
         # Create progress bar
@@ -152,7 +152,9 @@ class BatchProcessor:
 
         # Run all tasks concurrently
         tasks = [process_with_semaphore(item) for item in items]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        results: list[ProcessingResult | BaseException] = await asyncio.gather(
+            *tasks, return_exceptions=True
+        )
 
         # Convert exceptions to failed results
         final_results: list[ProcessingResult] = []
@@ -199,7 +201,7 @@ class BatchProcessor:
     async def _process_with_retry(
         self,
         item: Path,
-        process_fn: Callable[[Path], Awaitable[None]],
+        process_fn: Callable[[Path], Awaitable[Path | None]],
         max_attempts: int,
         backoff: float,
     ) -> ProcessingResult:
@@ -215,10 +217,9 @@ class BatchProcessor:
             ProcessingResult
         """
         last_error: str | None = None
+        start_time = time.time()
 
         for attempt in range(max_attempts + 1):
-            start_time = time.time()
-
             try:
                 result = await process_fn(item)
                 duration = (time.time() - start_time) * 1000

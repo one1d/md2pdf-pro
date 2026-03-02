@@ -8,10 +8,13 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import threading
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
+from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
 
 logger = logging.getLogger(__name__)
@@ -26,7 +29,7 @@ class FileChange:
     is_directory: bool
 
 
-class MarkdownEventHandler:
+class MarkdownEventHandler(FileSystemEventHandler):
     """Watchdog event handler for Markdown files."""
 
     def __init__(
@@ -43,7 +46,7 @@ class MarkdownEventHandler:
         self.callback = callback
         self.ignore_patterns = ignore_patterns or [".*", "_*"]
 
-    def dispatch(self, event) -> None:
+    def dispatch(self, event: FileSystemEvent) -> None:
         """Dispatch event to appropriate handler."""
         if event.event_type == "created":
             self.on_created(event)
@@ -79,11 +82,11 @@ class MarkdownEventHandler:
                 return True
         return False
 
-    def on_created(self, event) -> None:
+    def on_created(self, event: FileSystemEvent) -> None:
         """Handle file creation."""
         if event.is_directory:
             return
-        path = Path(event.src_path)
+        path = Path(str(event.src_path))
         if self._should_ignore(path):
             return
         if path.suffix.lower() in (".md", ".markdown"):
@@ -91,11 +94,11 @@ class MarkdownEventHandler:
                 FileChange(event_type="created", path=path, is_directory=False)
             )
 
-    def on_modified(self, event) -> None:
+    def on_modified(self, event: FileSystemEvent) -> None:
         """Handle file modification."""
         if event.is_directory:
             return
-        path = Path(event.src_path)
+        path = Path(str(event.src_path))
         if self._should_ignore(path):
             return
         if path.suffix.lower() in (".md", ".markdown"):
@@ -103,11 +106,11 @@ class MarkdownEventHandler:
                 FileChange(event_type="modified", path=path, is_directory=False)
             )
 
-    def on_deleted(self, event) -> None:
+    def on_deleted(self, event: FileSystemEvent) -> None:
         """Handle file deletion."""
         if event.is_directory:
             return
-        path = Path(event.src_path)
+        path = Path(str(event.src_path))
         if self._should_ignore(path):
             return
         if path.suffix.lower() in (".md", ".markdown"):
@@ -115,16 +118,16 @@ class MarkdownEventHandler:
                 FileChange(event_type="deleted", path=path, is_directory=False)
             )
 
-    def on_moved(self, event) -> None:
+    def on_moved(self, event: FileSystemEvent) -> None:
         """Handle file move."""
         if event.is_directory:
             return
         # Treat moved files as deleted + created
-        src_path = Path(event.src_path)
+        src_path = Path(str(event.src_path))
 
         # Handle case where dest_path is None
         if hasattr(event, "dest_path") and event.dest_path:
-            dest_path = Path(event.dest_path)
+            dest_path = Path(str(event.dest_path))
             if not self._should_ignore(dest_path):
                 if dest_path.suffix.lower() in (".md", ".markdown"):
                     self.callback(
@@ -181,9 +184,8 @@ class FileWatcher:
             "__pycache__",
         ]
 
-        self._observer: Observer | None = None
-        self._pending_changes: dict[Path, asyncio.Task[None]] = {}
-        self._loop: asyncio.AbstractEventLoop | None = None
+        self._observer: Any | None = None
+        self._pending_changes: dict[Path, threading.Thread] = {}
 
     def start(self) -> None:
         """Start watching for file changes."""
@@ -229,15 +231,12 @@ class FileWatcher:
             self._pending_changes.pop(path)
 
         # Schedule new debounced callback
-        def debounced_callback():
+        def debounced_callback() -> None:
             import time
 
             time.sleep(self.debounce_ms / 1000)
             if path not in self._pending_changes:
                 self.callback([path])
-
-        # Use thread instead of asyncio for simplicity
-        import threading
 
         thread = threading.Thread(target=debounced_callback)
         thread.daemon = True
@@ -254,7 +253,7 @@ class FileWatcher:
 class WatchManager:
     """Manager for multiple file watchers."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize watch manager."""
         self._watchers: dict[Path, FileWatcher] = {}
 

@@ -142,7 +142,7 @@ def convert(
         "--email",
         help="Author email",
     ),
-):
+) -> None:
     """Convert a Markdown file to PDF."""
     # Load configuration
     project_config = _load_config(config)
@@ -669,7 +669,7 @@ async def _convert_batch(files: list[Path], config: ProjectConfig) -> Any:
         show_progress=True,
     )
 
-    async def process_file(file: Path):
+    async def process_file(file: Path) -> Path:
         output_file = config.output.output_dir / f"{file.stem}.pdf"
         await _convert_single(file, output_file, config)
         return output_file
@@ -686,7 +686,7 @@ async def _watch_and_convert(
     """Watch and convert."""
     from md2pdf_pro.watcher import watch_and_convert
 
-    async def convert_file(file: Path):
+    async def convert_file(file: Path) -> None:
         output_file = config.output.output_dir / f"{file.stem}.pdf"
         await _convert_single(file, output_file, config)
         console.print(f"[green]✓[/green] Converted: {file.name}")
