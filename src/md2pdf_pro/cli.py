@@ -8,6 +8,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from pathlib import Path
+from typing import Any
 
 import typer
 from rich.console import Console
@@ -42,7 +43,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def version_callback(value: bool):
+def version_callback(value: bool) -> None:
     """Print version and exit."""
     if value:
         console.print(f"MD2PDF Pro v{__version__}")
@@ -57,7 +58,7 @@ def main(
     version: bool = typer.Option(
         None, "--version", callback=version_callback, is_eager=True
     ),
-):
+) -> None:
     """MD2PDF Pro - Batch Markdown to PDF Converter."""
     if verbose:
         logging.getLogger().setLevel(logging.DEBUG)
@@ -86,41 +87,62 @@ def convert(
         help="PDF compression level (none, web, screen, ebook, print, prepress)",
     ),
     author: str = typer.Option(
-        "", "--author", help="PDF author",
+        "",
+        "--author",
+        help="PDF author",
     ),
     title: str = typer.Option(
-        "", "--title", help="PDF title",
+        "",
+        "--title",
+        help="PDF title",
     ),
     watermark: bool = typer.Option(
-        False, "--watermark", help="Enable watermark",
+        False,
+        "--watermark",
+        help="Enable watermark",
     ),
     watermark_text: str = typer.Option(
-        "CONFIDENTIAL", "--watermark-text", help="Watermark text",
+        "CONFIDENTIAL",
+        "--watermark-text",
+        help="Watermark text",
     ),
     # Chinese journal template options
     journal_title: str = typer.Option(
-        "", "--journal-title", help="Chinese journal name",
+        "",
+        "--journal-title",
+        help="Chinese journal name",
     ),
     journal_vol: str = typer.Option(
-        "", "--journal-vol", help="Journal volume number",
+        "",
+        "--journal-vol",
+        help="Journal volume number",
     ),
     journal_issue: str = typer.Option(
-        "", "--journal-issue", help="Journal issue number",
+        "",
+        "--journal-issue",
+        help="Journal issue number",
     ),
     journal_year: str = typer.Option(
-        "", "--journal-year", help="Publication year",
+        "",
+        "--journal-year",
+        help="Publication year",
     ),
     article_doi: str = typer.Option(
-        "", "--doi", help="Article DOI",
+        "",
+        "--doi",
+        help="Article DOI",
     ),
     affiliation: str = typer.Option(
-        "", "--affiliation", help="Author affiliation",
+        "",
+        "--affiliation",
+        help="Author affiliation",
     ),
     email: str = typer.Option(
-        "", "--email", help="Author email",
-    )
+        "",
+        "--email",
+        help="Author email",
+    ),
 ):
-
     """Convert a Markdown file to PDF."""
     # Load configuration
     project_config = _load_config(config)
@@ -143,6 +165,7 @@ def convert(
         # Get chinese_journal template if not already using custom template
         if not template:
             from md2pdf_pro.templates import get_template
+
             journal_template = get_template("chinese_journal")
             if journal_template:
                 project_config.pandoc.template = journal_template
@@ -164,7 +187,6 @@ def convert(
         project_config.pdf.watermark.enabled = True
     if watermark_text:
         project_config.pdf.watermark.text = watermark_text
-
 
     # Set output path
     # 逻辑：如果未指定输出文件，则使用输入文件名（后缀改为.pdf）
@@ -206,9 +228,6 @@ def convert(
         raise typer.Exit(code=1)
 
 
-
-
-
 @app.command()
 def batch(
     input_pattern: str = typer.Argument(
@@ -232,7 +251,7 @@ def batch(
     dry_run: bool = typer.Option(
         False, "--dry-run", help="Show what would be processed"
     ),
-):
+) -> None:
     """Convert multiple Markdown files to PDF."""
     # Load configuration
     project_config = _load_config(config)
@@ -283,7 +302,7 @@ def watch(
     workers: int = typer.Option(
         8, "--workers", "-w", help="Number of concurrent workers"
     ),
-):
+) -> None:
     """Watch directory for changes and convert automatically."""
     # Load configuration
     project_config = ProjectConfig()
@@ -313,7 +332,7 @@ def init(
     force: bool = typer.Option(
         False, "--force", "-f", help="Overwrite existing config"
     ),
-):
+) -> None:
     """Initialize configuration file."""
     if path.exists() and not force:
         console.print(f"[yellow]Config already exists: {path}[/yellow]")
@@ -331,7 +350,7 @@ def config_show(
     config: Path | None = typer.Option(
         None, "--config", "-c", help="Configuration file"
     ),
-):
+) -> None:
     """Show current configuration."""
     project_config = _load_config(config)
 
@@ -354,7 +373,7 @@ def config_show(
 def doctor(
     check: bool = typer.Option(True, "--check", help="Check dependencies"),
     fix: bool = typer.Option(False, "--fix", help="Attempt to fix issues"),
-):
+) -> None:
     """Check system dependencies and environment."""
     console.print("[cyan]Checking dependencies...[/cyan]\n")
 
@@ -399,7 +418,7 @@ app.add_typer(templates_app, name="templates")
 
 
 @templates_app.command("list")
-def list_templates_cmd():
+def list_templates_cmd() -> None:
     """List available templates."""
     from md2pdf_pro.templates import (
         USER_TEMPLATE_DIR,
@@ -430,7 +449,7 @@ def list_templates_cmd():
 
 
 @templates_app.command("path")
-def template_path_cmd(name: str):
+def template_path_cmd(name: str) -> None:
     """Show template path."""
     from md2pdf_pro.templates import get_template
 
@@ -446,7 +465,7 @@ def template_path_cmd(name: str):
 def init_template_cmd(
     name: str = typer.Argument(..., help="Template name"),
     force: bool = typer.Option(False, "--force", "-f", help="Overwrite existing"),
-):
+) -> None:
     """Initialize a user template from built-in template."""
     from md2pdf_pro.templates import (
         ensure_user_template_dir,
@@ -472,7 +491,6 @@ def init_template_cmd(
     import shutil
 
     shutil.copy(source_path, dest_path)
-    shutil.copy(source_path, dest_path)
     console.print(f"[green]Template copied to:[/green] {dest_path}")
 
 
@@ -482,7 +500,7 @@ app.add_typer(plugins_app, name="plugins")
 
 
 @plugins_app.command("list")
-def list_plugins_cmd():
+def list_plugins_cmd() -> None:
     """List available plugins."""
     from md2pdf_pro.plugins import (
         get_plugin_manager,
@@ -506,7 +524,11 @@ def list_plugins_cmd():
     table.add_column("Status", style="yellow")
 
     for plugin in plugins:
-        status = "[green]Enabled[/green]" if manager.is_enabled(plugin.name) else "[dim]Disabled[/dim]"
+        status = (
+            "[green]Enabled[/green]"
+            if manager.is_enabled(plugin.name)
+            else "[dim]Disabled[/dim]"
+        )
         table.add_row(
             plugin.name,
             plugin.version,
@@ -518,7 +540,7 @@ def list_plugins_cmd():
 
 
 @plugins_app.command("enable")
-def enable_plugin_cmd(name: str):
+def enable_plugin_cmd(name: str) -> None:
     """Enable a plugin."""
     from md2pdf_pro.plugins import (
         get_plugin_manager,
@@ -537,7 +559,7 @@ def enable_plugin_cmd(name: str):
 
 
 @plugins_app.command("disable")
-def disable_plugin_cmd(name: str):
+def disable_plugin_cmd(name: str) -> None:
     """Disable a plugin."""
     from md2pdf_pro.plugins import (
         get_plugin_manager,
@@ -555,7 +577,6 @@ def disable_plugin_cmd(name: str):
     console.print(f"[yellow]Plugin '{name}' disabled[/yellow]")
 
 
-#WQ|def _load_config(config_path: Path | None) -> ProjectConfig:
 def _load_config(config_path: Path | None) -> ProjectConfig:
     """Load project configuration."""
     if config_path and config_path.exists():
@@ -607,7 +628,9 @@ def _should_process(file: Path, ignore: list[str] | None) -> bool:
     return file.suffix.lower() in (".md", ".markdown")
 
 
-async def _convert_single(input_file: Path, output_file: Path, config: ProjectConfig):
+async def _convert_single(
+    input_file: Path, output_file: Path, config: ProjectConfig
+) -> None:
     """Convert single file."""
     # Initialize components
     mermaid = MermaidPreprocessor(config.mermaid)
@@ -636,7 +659,7 @@ async def _convert_single(input_file: Path, output_file: Path, config: ProjectCo
         temp_md.unlink(missing_ok=True)
 
 
-async def _convert_batch(files: list[Path], config: ProjectConfig):
+async def _convert_batch(files: list[Path], config: ProjectConfig) -> Any:
     """Convert batch of files."""
     # Initialize components
     mermaid = MermaidPreprocessor(config.mermaid)
@@ -659,7 +682,7 @@ async def _watch_and_convert(
     config: ProjectConfig,
     recursive: bool,
     debounce_ms: int,
-):
+) -> None:
     """Watch and convert."""
     from md2pdf_pro.watcher import watch_and_convert
 
@@ -676,7 +699,7 @@ async def _watch_and_convert(
     )
 
 
-def _print_batch_results(results) -> None:
+def _print_batch_results(results: Any) -> None:
     """Print batch conversion results."""
     console.print("\n[bold]Batch Complete[/bold]")
     console.print(f"  Success: [green]{results.success}[/green]")

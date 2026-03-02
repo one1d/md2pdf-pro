@@ -133,6 +133,7 @@ class FontConfig(BaseModel):
     )
     latin_primary: str = Field(default="Times New Roman")
     monospace: str = Field(default="Menlo")
+    geometry_margin: str = Field(default="2.5cm")
 
 
 class PdfMetadataConfig(BaseModel):
@@ -195,11 +196,6 @@ class PluginConfig(BaseModel):
     config: dict[str, dict[str, Any]] = Field(default_factory=dict)
 
 
-#RV|class ProjectConfig(BaseModel):
-
-
-
-
 class ProjectConfig(BaseModel):
     """Main project configuration."""
 
@@ -216,8 +212,6 @@ class ProjectConfig(BaseModel):
     plugins: PluginConfig = Field(default_factory=PluginConfig)
 
     # File patterns
-
-
 
     # File patterns
     input_patterns: list[str] = Field(default_factory=lambda: ["*.md", "*.markdown"])
@@ -316,11 +310,11 @@ class ProjectConfig(BaseModel):
         if os.getenv("MD2PDF_PDF_ENGINE"):
             config.pandoc.pdf_engine = PdfEngine(os.getenv("MD2PDF_PDF_ENGINE"))
 
-        if os.getenv("MD2PDF_MAX_WORKERS"):
-            config.processing.max_workers = int(os.getenv("MD2PDF_MAX_WORKERS"))
+        if max_workers := os.getenv("MD2PDF_MAX_WORKERS"):
+            config.processing.max_workers = int(max_workers)
 
-        if os.getenv("MD2PDF_OUTPUT_DIR"):
-            config.output.output_dir = Path(os.getenv("MD2PDF_OUTPUT_DIR"))
+        if output_dir := os.getenv("MD2PDF_OUTPUT_DIR"):
+            config.output.output_dir = Path(output_dir)
 
         if os.getenv("MD2PDF_LOG_LEVEL"):
             config.logging.level = LogLevel(os.getenv("MD2PDF_LOG_LEVEL"))

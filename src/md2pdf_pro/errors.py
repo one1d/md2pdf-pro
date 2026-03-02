@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from enum import Enum
+from typing import Any
 
 
 class ErrorCode(Enum):
@@ -55,7 +56,7 @@ class MD2PDFError(Exception):
         self,
         message: str,
         error_code: ErrorCode,
-        details: dict | None = None,
+        details: dict[str, Any] | None = None,
         original_error: Exception | None = None,
     ):
         """Initialize MD2PDFError.
@@ -76,7 +77,7 @@ class MD2PDFError(Exception):
         """Return string representation of the error."""
         return f"[{self.error_code.name}] {self.message}"
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert error to dictionary."""
         return {
             "error_code": self.error_code.value,
