@@ -10,4 +10,5 @@ repos:
     rev: v1.8.0
     hooks:
       - id: mypy
-        args: [--strict, --ignore-missing-imports, src/]
+        args: [--strict, --ignore-missing-imports, --explicit-package-bases, src/md2pdf_pro]
+        pass_filenames: false
